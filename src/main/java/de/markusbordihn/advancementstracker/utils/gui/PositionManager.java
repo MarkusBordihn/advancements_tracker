@@ -19,18 +19,9 @@
 
 package de.markusbordihn.advancementstracker.utils.gui;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.mojang.blaze3d.platform.Window;
-
-import net.minecraft.client.Minecraft;
-
-import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.config.ClientConfig;
 
 public class PositionManager {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private static final int HOTBAR_RIGHT = 90;
   private static final int HOTBAR_LEFT = -90;
@@ -38,30 +29,18 @@ public class PositionManager {
 
   private PositionPoint position = new PositionPoint();
   private BasePosition basePosition = BasePosition.MIDDLE_RIGHT;
-  private Window window;
   private int guiScaledHeight;
   private int guiScaledWidth;
   private int height = 100;
   private int width = 100;
   private int defaultHeight = 100;
   private int defaultWidth = 100;
-  private int windowHeight = 400;
-  private int windowWidth = 640;
 
   public enum BasePosition {
     BOTTOM_LEFT, BOTTOM_RIGHT, MIDDLE_LEFT, MIDDLE_RIGHT, TOP_LEFT, TOP_RIGHT
   }
 
   public PositionManager() {}
-
-  public PositionManager(Minecraft minecraft) {
-    setInstance(minecraft);
-  }
-
-  public void setInstance(Minecraft minecraft) {
-    this.window = minecraft.getWindow();
-    updateWindow();
-  }
 
   public PositionPoint getTopLeft() {
     return new PositionPoint(0, 0);
@@ -181,14 +160,6 @@ public class PositionManager {
     return position.getAbsoluteY() + this.height;
   }
 
-  public int getWindowHeight() {
-    return this.windowHeight;
-  }
-
-  public int getWindowWidth() {
-    return this.windowWidth;
-  }
-
   public int getWindowHeightScaled() {
     return this.guiScaledHeight;
   }
@@ -201,20 +172,15 @@ public class PositionManager {
     this.position = position;
   }
 
-  public void updateWindow() {
-    if (window == null) {
+  public void updateWindow(int screenWidth, int screenHeight) {
+    if (guiScaledWidth == screenWidth && guiScaledHeight == screenHeight) {
       return;
     }
-    int currentGuiScaledWidth = window.getGuiScaledWidth();
-    int currentGuiScaleHeight = window.getGuiScaledHeight();
-    if (guiScaledWidth == currentGuiScaledWidth && guiScaledHeight == currentGuiScaleHeight) {
-      return;
-    }
-    this.guiScaledHeight = currentGuiScaleHeight;
-    this.guiScaledWidth = currentGuiScaledWidth;
-    this.windowHeight = window.getHeight();
-    this.windowWidth = window.getWidth();
+    this.guiScaledHeight = screenHeight;
+    this.guiScaledWidth = screenWidth;
     updateBasePosition();
+    setPositionX(ClientConfig.CLIENT.widgetLeft.get());
+    setPositionY(ClientConfig.CLIENT.widgetTop.get());
   }
 
   private int getWidthOrDefault() {

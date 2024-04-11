@@ -19,29 +19,21 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import java.util.Date;
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.google.common.collect.Lists;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.CriterionProgress;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import de.markusbordihn.advancementstracker.Constants;
-
 public class AdvancementEntryProgress {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private AdvancementProgress advancementProgress;
 
@@ -52,12 +44,11 @@ public class AdvancementEntryProgress {
   private String namespace = "";
 
   // Progress with default values
-  private Date firstProgressDate;
-  private Date lastProgressDate;
+  private Instant firstProgressDate;
+  private Instant lastProgressDate;
   private Float progress = 0f;
   private String progressString = "";
   private boolean isDone = false;
-  private int progressStringWidth = 0;
   private int progressTotal = 0;
 
   // Criteria
@@ -65,23 +56,15 @@ public class AdvancementEntryProgress {
   private Iterable<String> remainingCriteria;
   private int completedCriteriaNumber;
   private int remainingCriteriaNumber;
-  private int maxCriteraRequired;
+  private final int maxCriteraRequired;
 
-  // Helper Tools
-  private final Font font;
-  private final Minecraft minecraft;
-
-  AdvancementEntryProgress(Advancement advancement, AdvancementProgress advancementProgress) {
-    // General Helper Tools
-    this.minecraft = Minecraft.getInstance();
-    this.font = this.minecraft.font;
-
+  AdvancementEntryProgress(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
     // ID's
-    this.id = advancement.getId();
-    this.namespace = advancement.getId().getNamespace();
+    this.id = advancementHolder.id();
+    this.namespace = id.getNamespace();
 
     // Advancement Progress
-    this.maxCriteraRequired = advancement.getMaxCriteraRequired();
+    this.maxCriteraRequired = advancementHolder.value().criteria().size();
     this.advancementProgress = advancementProgress;
     update(this.advancementProgress);
   }
@@ -114,7 +97,6 @@ public class AdvancementEntryProgress {
     if (this.remainingCriteriaNumber > 0 || this.completedCriteriaNumber > 0) {
       this.progressTotal = this.completedCriteriaNumber + this.remainingCriteriaNumber;
       this.progressString = this.completedCriteriaNumber + "/" + this.progressTotal;
-      this.progressStringWidth = font.width(this.progressString);
     }
 
     this.lastProgressDate = this.findLastProgressDate();
@@ -140,20 +122,16 @@ public class AdvancementEntryProgress {
     return this.remainingCriteriaNumber;
   }
 
-  public Date getFirstProgressDate() {
+  public Instant getFirstProgressDate() {
     return this.firstProgressDate;
   }
 
-  public Date getLastProgressDate() {
+  public Instant getLastProgressDate() {
     return this.lastProgressDate;
   }
 
   public String getProgressString() {
     return this.progressString;
-  }
-
-  public int getProgressStringWidth() {
-    return this.progressStringWidth;
   }
 
   public int getProgressTotal() {
@@ -188,12 +166,12 @@ public class AdvancementEntryProgress {
     return result;
   }
 
-  private Date findLastProgressDate() {
-    Date date = null;
+  private Instant findLastProgressDate() {
+    Instant date = null;
     for (CriterionProgress criterionProgress : this.criteriaMap.values()) {
-      Date obtainedDate = criterionProgress.getObtained();
+      Instant obtainedDate = criterionProgress.getObtained();
       if (criterionProgress.isDone()
-          && (date == null || (obtainedDate != null && obtainedDate.after(date)))) {
+          && (date == null || (obtainedDate != null && obtainedDate.isAfter(date)))) {
         date = criterionProgress.getObtained();
       }
     }
@@ -270,7 +248,7 @@ public class AdvancementEntryProgress {
         return advancementName.getString();
       }
 
-      log.warn("Unable to translate {} ({}) to a more meaningful name.", criteria,
+      AdvancementsTracker.log.warn("Unable to translate {} ({}) to a more meaningful name.", criteria,
           advancementNameFormat);
     }
     return criteria;

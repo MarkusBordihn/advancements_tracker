@@ -19,29 +19,26 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
-import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
 
-@EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class ClientAdvancementManager implements ClientAdvancements.Listener {
-
-  private static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private static final short ADD_LISTENER_TICK = 2;
 
@@ -83,7 +80,7 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
         if (!needsReload && !(screen instanceof AdvancementsTrackerScreen)
             && (screen instanceof AdvancementsScreen
                 || screen instanceof ClientAdvancements.Listener)) {
-          log.debug("Need to reload advancements after screen {} is closed!", minecraft.screen);
+          AdvancementsTracker.log.debug("Need to reload advancements after screen {} is closed!", minecraft.screen);
           needsReload = true;
         }
       } else if (needsReload) {
@@ -93,7 +90,7 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
   }
 
   public static void reset() {
-    log.debug("Resetting Client Advancement Manager ...");
+    AdvancementsTracker.log.debug("Resetting Client Advancement Manager ...");
     clientAdvancementManager = new ClientAdvancementManager();
     clientAdvancements = null;
     hasListener = false;
@@ -108,73 +105,76 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
     Minecraft minecraft = Minecraft.getInstance();
     if (minecraft == null || minecraft.player == null || minecraft.player.connection == null
         || minecraft.player.connection.getAdvancements() == null || minecraft.player.connection
-            .getAdvancements().getAdvancements().getAllAdvancements().isEmpty()) {
+            .getAdvancements().getTree().nodes().isEmpty()) {
       return;
     }
-    log.debug("Adding client advancement manager listener...");
+    AdvancementsTracker.log.debug("Adding client advancement manager listener...");
     clientAdvancements = minecraft.player.connection.getAdvancements();
     minecraft.player.connection.getAdvancements().setListener(clientAdvancementManager);
     hasListener = true;
   }
 
-  public static boolean isValidAdvancement(Advancement advancement) {
-    String advancementId = advancement.getId().toString();
+  public static boolean isValidAdvancement(AdvancementHolder advancementHolder) {
+    String advancementId = advancementHolder.id().toString();
     if (advancementId.startsWith("minecraft:recipes/")
         || advancementId.startsWith("smallships:recipes")) {
       return false;
-    } else if (advancement.getDisplay() == null) {
-      log.debug("[Skip Advancement with no display information] {}", advancement);
+    } else if (advancementHolder.value().display().isEmpty()) {
+      AdvancementsTracker.log.debug("[Skip Advancement with no display information] {}", advancementId);
       return false;
     }
     return true;
   }
 
   @Override
-  public void onUpdateAdvancementProgress(Advancement advancement,
+  public void onUpdateAdvancementProgress(AdvancementNode advancementNode,
       AdvancementProgress advancementProgress) {
-    if (isValidAdvancement(advancement)) {
-      log.debug("[Update Advancement Progress] {} with {}", advancement, advancementProgress);
-      AdvancementsManager.updateAdvancementProgress(advancement, advancementProgress);
+    AdvancementHolder advancementHolder = advancementNode.holder();
+    if (isValidAdvancement(advancementHolder)) {
+      AdvancementsTracker.log.debug("[Update Advancement Progress] {} with {}", advancementHolder.id(), advancementProgress);
+      AdvancementsManager.updateAdvancementProgress(advancementHolder, advancementProgress);
     }
   }
 
   @Override
-  public void onAddAdvancementRoot(Advancement advancement) {
-    if (isValidAdvancement(advancement) && advancement.getParent() == null) {
-      log.debug("[Add Advancement Root] {}", advancement);
-      AdvancementsManager.addAdvancementRoot(advancement);
+  public void onAddAdvancementRoot(AdvancementNode advancementNode) {
+    AdvancementHolder advancementHolder = advancementNode.holder();
+    if (isValidAdvancement(advancementHolder) && advancementNode.parent() == null) {
+      AdvancementsTracker.log.debug("[Add Advancement Root] {}", advancementHolder.id());
+      AdvancementsManager.addAdvancementRoot(advancementHolder);
     }
   }
 
   @Override
-  public void onRemoveAdvancementRoot(Advancement advancement) {
+  public void onRemoveAdvancementRoot(AdvancementNode advancementNode) {
     // Not used.
-    log.debug("[Remove Advancement Root] {}", advancement);
+    AdvancementsTracker.log.debug("[Remove Advancement Root] {}", advancementNode.holder().id());
   }
 
   @Override
-  public void onAddAdvancementTask(Advancement advancement) {
-    if (isValidAdvancement(advancement) && advancement.getParent() != null) {
-      log.debug("[Add Advancement Task] {}", advancement);
-      AdvancementsManager.addAdvancementTask(advancement);
+  public void onAddAdvancementTask(AdvancementNode advancementNode) {
+    AdvancementHolder advancementHolder = advancementNode.holder();
+    if (isValidAdvancement(advancementHolder) && advancementNode.parent() != null) {
+      AdvancementsTracker.log.debug("[Add Advancement Task] {}", advancementHolder.id());
+      AdvancementsManager.addAdvancementTask(advancementHolder, advancementNode.parent());
     }
   }
 
   @Override
-  public void onRemoveAdvancementTask(Advancement advancement) {
-    log.debug("[Remove Advancement Task] {}", advancement);
+  public void onRemoveAdvancementTask(AdvancementNode advancementNode) {
+    AdvancementsTracker.log.debug("[Remove Advancement Task] {}", advancementNode.holder().id());
   }
 
   @Override
   public void onAdvancementsCleared() {
     // Not used.
-    log.debug("[Advancements Cleared] ...");
+    AdvancementsTracker.log.debug("[Advancements Cleared] ...");
   }
 
   @Override
-  public void onSelectedTabChanged(Advancement advancement) {
+  public void onSelectedTabChanged(AdvancementHolder advancementHolder) {
     // Not used.
-    log.debug("[Selected Tab Changed] {}", advancement);
+    AdvancementsTracker.log.debug("[Selected Tab Changed] {}", advancementHolder == null ? null : advancementHolder.id());
   }
 
 }

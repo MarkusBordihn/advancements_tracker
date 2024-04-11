@@ -19,23 +19,13 @@
 
 package de.markusbordihn.advancementstracker.client.gui.components;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
-import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 
-@OnlyIn(Dist.CLIENT)
 public class AdvancementTooltip {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private final AdvancementEntry advancementEntry;
   private final Font font;

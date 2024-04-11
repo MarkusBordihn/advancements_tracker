@@ -19,39 +19,39 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.resources.ResourceLocation;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
 import de.markusbordihn.advancementstracker.Constants;
+import org.jetbrains.annotations.Nullable;
 
-@EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class AdvancementsManager {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private static AdvancementEntry selectedAdvancement;
   private static AdvancementEntry selectedRootAdvancement;
   private static Map<Advancement, AdvancementProgress> advancementProgressMap = new HashMap<>();
   private static Map<ResourceLocation, Set<AdvancementEntry>> advancementsMap = new HashMap<>();
-  private static Set<AdvancementEntry> rootAdvancements = new HashSet<>();
-  private static Set<String> advancementsIndex = new HashSet<>();
+  private static Map<ResourceLocation, AdvancementEntry> rootAdvancements = new HashMap<>();
+  private static Set<ResourceLocation> advancementsIndex = new HashSet<>();
   private static boolean hasAdvancements = false;
 
   protected AdvancementsManager() {}
@@ -66,38 +66,38 @@ public class AdvancementsManager {
   }
 
   public static void reset() {
-    log.debug("Reset Advancements Manager ...");
+    AdvancementsTracker.log.debug("Reset Advancements Manager ...");
     advancementProgressMap = new HashMap<>();
     advancementsIndex = new HashSet<>();
     advancementsMap = new HashMap<>();
     hasAdvancements = false;
-    rootAdvancements = new HashSet<>();
+    rootAdvancements = new HashMap<>();
     selectedAdvancement = null;
     selectedRootAdvancement = null;
   }
 
-  public static void addAdvancementRoot(Advancement advancement) {
-    String advancementId = advancement.getId().toString();
+  public static void addAdvancementRoot(AdvancementHolder advancementHolder) {
+    ResourceLocation advancementId = advancementHolder.id();
     if (hasAdvancement(advancementId)) {
       return;
     }
-    AdvancementProgress advancementProgress = getAdvancementProgress(advancement);
-    AdvancementEntry advancementEntry = new AdvancementEntry(advancement, advancementProgress);
-    rootAdvancements.add(advancementEntry);
+    AdvancementProgress advancementProgress = getAdvancementProgress(advancementHolder.value());
+    AdvancementEntry advancementEntry = new AdvancementEntry(advancementHolder, advancementProgress);
+    rootAdvancements.put(advancementId, advancementEntry);
     advancementsIndex.add(advancementId);
-    log.debug("Added Root Advancement: {}", advancementEntry);
+    AdvancementsTracker.log.debug("Added Root Advancement: {}", advancementEntry);
   }
 
-  public static void addAdvancementTask(Advancement advancement) {
-    String advancementId = advancement.getId().toString();
-    Advancement rootAdvancement = advancement.getParent();
-
+  public static void addAdvancementTask(AdvancementHolder advancementHolder, @Nullable AdvancementNode parent) {
+    ResourceLocation advancementId = advancementHolder.id();
+    int rootLevel = 0;
     // Try to add root advancement, if this is a child advancement.
-    while (rootAdvancement != null && rootAdvancement.getParent() != null) {
-      rootAdvancement = rootAdvancement.getParent();
+    while (parent != null && parent.parent() != null) {
+      parent = parent.parent();
+      rootLevel++;
     }
-    if (rootAdvancement != null) {
-      addAdvancementRoot(rootAdvancement);
+    if (parent != null) {
+      addAdvancementRoot(parent.holder());
     }
 
     // Skip rest, if the advancement is already known.
@@ -106,59 +106,40 @@ public class AdvancementsManager {
     }
 
     // Get advancements stats and store the advancement data.
-    AdvancementProgress advancementProgress = getAdvancementProgress(advancement);
-    AdvancementEntry advancementEntry = new AdvancementEntry(advancement, advancementProgress);
-    Set<AdvancementEntry> childAdvancements = advancementsMap.get(advancementEntry.rootId);
-    if (childAdvancements == null) {
-      childAdvancements = new HashSet<>();
-      advancementsMap.put(advancementEntry.rootId, childAdvancements);
-    }
-    childAdvancements.add(advancementEntry);
+    AdvancementProgress advancementProgress = getAdvancementProgress(advancementHolder.value());
+    AdvancementEntry advancementEntry = new AdvancementEntry(advancementHolder, advancementProgress, parent, rootLevel);
+    advancementsMap.computeIfAbsent(advancementEntry.rootId, k -> new HashSet<>())
+          .add(advancementEntry);
     advancementsIndex.add(advancementId);
     if (!hasAdvancements) {
       hasAdvancements = true;
     }
-    log.debug("Added Advancement Task: {}", advancementEntry);
+    AdvancementsTracker.log.debug("Added Advancement Task: {}", advancementEntry);
     TrackedAdvancementsManager.checkForTrackedAdvancement(advancementEntry);
   }
 
-  public static boolean hasAdvancement(Advancement advancement) {
-    return hasAdvancement(advancement.getId().toString());
+  public static boolean hasAdvancement(AdvancementHolder advancementHolder) {
+    return hasAdvancement(advancementHolder.id());
   }
 
-  public static boolean hasAdvancement(String advancementId) {
+  public static boolean hasAdvancement(ResourceLocation advancementId) {
     return advancementsIndex.contains(advancementId);
   }
 
-  public static boolean hasRootAdvancement(Advancement advancement) {
-    for (AdvancementEntry rootAdvancement : rootAdvancements) {
-      if (advancement.getId() == rootAdvancement.getId()) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean hasRootAdvancement(AdvancementHolder advancementHolder) {
+    return rootAdvancements.containsKey(advancementHolder.id());
   }
 
-  public static AdvancementEntry getRootAdvancement(Advancement advancement) {
-    for (AdvancementEntry rootAdvancement : rootAdvancements) {
-      if (advancement.getId() == rootAdvancement.getId()) {
-        return rootAdvancement;
-      }
-    }
-    return null;
+  public static AdvancementEntry getRootAdvancement(AdvancementHolder advancementHolder) {
+    return rootAdvancements.get(advancementHolder.id());
   }
 
   public static Set<AdvancementEntry> getRootAdvancements() {
-    return rootAdvancements;
+    return new HashSet<>(rootAdvancements.values());
   }
 
-  public static Set<AdvancementEntry> getSortedRootAdvancements(
-      Comparator<AdvancementEntry> comparator) {
-    Set<AdvancementEntry> advancements = getRootAdvancements();
-    if (advancements == null) {
-      return new HashSet<>();
-    }
-    return advancements.stream().sorted(comparator)
+  public static Set<AdvancementEntry> getSortedRootAdvancements(Comparator<AdvancementEntry> comparator) {
+    return rootAdvancements.values().stream().sorted(comparator)
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
@@ -186,14 +167,14 @@ public class AdvancementsManager {
     return completedAdvancements;
   }
 
-  public static AdvancementEntry getAdvancement(Advancement advancement) {
-    return getAdvancement(advancement.getId().toString());
+  public static AdvancementEntry getAdvancement(AdvancementHolder advancementHolder) {
+    return getAdvancement(advancementHolder.id());
   }
 
-  public static AdvancementEntry getAdvancement(String id) {
+  public static AdvancementEntry getAdvancement(ResourceLocation id) {
     for (Set<AdvancementEntry> advancementEntries : advancementsMap.values()) {
       for (AdvancementEntry advancementEntry : advancementEntries) {
-        if (id.equals(advancementEntry.getIdString())) {
+        if (id.equals(advancementEntry.getId())) {
           return advancementEntry;
         }
       }
@@ -203,7 +184,7 @@ public class AdvancementsManager {
 
   public static Set<AdvancementEntry> getAdvancements(AdvancementEntry rootAdvancement) {
     if (rootAdvancement == null) {
-      log.error("Unable to get advancements for root advancement {}", rootAdvancement);
+      AdvancementsTracker.log.error("Unable to get advancements for root advancement {}", rootAdvancement);
       return new HashSet<>();
     }
     Set<AdvancementEntry> advancements = advancementsMap.get(rootAdvancement.getId());
@@ -229,21 +210,20 @@ public class AdvancementsManager {
     return getSortedAdvancements(rootAdvancement, AdvancementEntry.sortByStatus());
   }
 
-  public static void updateAdvancementProgress(Advancement advancement,
+  public static void updateAdvancementProgress(AdvancementHolder advancementHolder,
       AdvancementProgress advancementProgress) {
-    advancementProgressMap.put(advancement, advancementProgress);
-    AdvancementEntry advancementEntry = getAdvancement(advancement);
+    advancementProgressMap.put(advancementHolder.value(), advancementProgress);
+    AdvancementEntry advancementEntry = getAdvancement(advancementHolder);
     if (advancementEntry == null) {
-      advancementEntry = getRootAdvancement(advancement);
+      advancementEntry = getRootAdvancement(advancementHolder);
       if (advancementEntry == null) {
-        log.error("Unable to find entry for advancement {} with progress {}", advancement,
-            advancementProgress);
+        AdvancementsTracker.log.error("Unable to find entry for advancement {} with progress {}", advancementHolder.id(), advancementProgress);
         return;
       }
     }
     advancementEntry.updateAdvancementProgress(advancementProgress);
     if (advancementProgress.isDone()) {
-      TrackedAdvancementsManager.untrackAdvancement(advancement);
+      TrackedAdvancementsManager.untrackAdvancement(advancementHolder);
     }
   }
 
@@ -252,10 +232,13 @@ public class AdvancementsManager {
   }
 
   public static AdvancementEntry getSelectedAdvancement() {
-    if (selectedAdvancement == null && getSelectedRootAdvancement() != null) {
-      Set<AdvancementEntry> possibleAdvancements = getAdvancements(getSelectedRootAdvancement());
-      if (!possibleAdvancements.isEmpty() && possibleAdvancements.iterator().hasNext()) {
-        selectedAdvancement = possibleAdvancements.iterator().next();
+    if (selectedAdvancement == null) {
+      AdvancementEntry selectedRoot = getSelectedRootAdvancement();
+      if (selectedRoot != null) {
+        Set<AdvancementEntry> possibleAdvancements = getAdvancements(selectedRoot);
+        if (!possibleAdvancements.isEmpty() && possibleAdvancements.iterator().hasNext()) {
+          selectedAdvancement = possibleAdvancements.iterator().next();
+        }
       }
     }
     return selectedAdvancement;
@@ -266,12 +249,12 @@ public class AdvancementsManager {
   }
 
   public static AdvancementEntry getSelectedRootAdvancement() {
-    if (selectedRootAdvancement == null && rootAdvancements != null
-        && rootAdvancements.iterator().hasNext()) {
-      AdvancementEntry possibleRootAdvancement = rootAdvancements.iterator().next();
-      if (possibleRootAdvancement != selectedRootAdvancement) {
-        log.debug("Select root advancement: {}", selectedAdvancement);
-        selectedRootAdvancement = possibleRootAdvancement;
+    if (selectedRootAdvancement == null && rootAdvancements != null) {
+      //Just use a find any as it is an unsorted map
+      Optional<AdvancementEntry> possibleRootAdvancement = rootAdvancements.values().stream().findAny();
+      if (possibleRootAdvancement.isPresent()) {
+        AdvancementsTracker.log.debug("Select root advancement: {}", selectedAdvancement);
+        selectedRootAdvancement = possibleRootAdvancement.get();
         selectedAdvancement = null;
       }
     }
@@ -280,8 +263,7 @@ public class AdvancementsManager {
 
   public static void setSelectedRootAdvancement(AdvancementEntry selectedRootAdvancement) {
     AdvancementsManager.selectedRootAdvancement = selectedRootAdvancement;
-    if (selectedAdvancement != null
-        && selectedRootAdvancement.getId() != selectedAdvancement.rootId) {
+    if (!selectedRootAdvancement.equals(selectedAdvancement)) {
       selectedAdvancement = null;
     }
   }

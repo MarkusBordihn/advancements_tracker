@@ -19,14 +19,14 @@
 
 package de.markusbordihn.advancementstracker.client.gui.screens;
 
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.Minecraft;
@@ -39,10 +39,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.StringUtils;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementsManager;
@@ -50,10 +46,7 @@ import de.markusbordihn.advancementstracker.client.gui.components.SmallButton;
 import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementCategoryPanel;
 import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementOverviewPanel;
 
-@OnlyIn(Dist.CLIENT)
 public class AdvancementsTrackerScreen extends Screen {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   // Resources
   private static final ResourceLocation miscTexture =
@@ -94,7 +87,7 @@ public class AdvancementsTrackerScreen extends Screen {
 
     Component getButtonText() {
       return Component
-          .translatable(Constants.MOD_PREFIX + "sort." + StringUtils.toLowerCase(name()));
+          .translatable(Constants.MOD_PREFIX + "sort." + name().toLowerCase(Locale.ROOT));
     }
   }
 
@@ -134,7 +127,7 @@ public class AdvancementsTrackerScreen extends Screen {
     if (!(minecraft.screen instanceof AdvancementsTrackerScreen)) {
       parentScreen = minecraft.screen;
       Minecraft.getInstance().setScreen(new AdvancementsTrackerScreen());
-    } else if (minecraft.screen instanceof AdvancementsTrackerScreen) {
+    } else {
       Minecraft.getInstance().setScreen(parentScreen);
       parentScreen = null;
     }
@@ -157,15 +150,16 @@ public class AdvancementsTrackerScreen extends Screen {
     if (this.rootAdvancements == null) {
       this.reloadRootAdvancements();
     }
-    this.rootAdvancements
-        .forEach(advancementEntry -> listViewConsumer.accept(newEntry.apply(advancementEntry)));
+    for (AdvancementEntry advancementEntry : this.rootAdvancements) {
+        listViewConsumer.accept(newEntry.apply(advancementEntry));
+    }
   }
 
   public void reloadRootAdvancements() {
     this.reloadRootAdvancements(CategorySortType.NORMAL);
   }
 
-  public void reloadRootAdvancements(CategorySortType sortType) {
+  private void reloadRootAdvancements(CategorySortType sortType) {
     if (sortType == CategorySortType.NORMAL) {
       this.rootAdvancements = AdvancementsManager.getRootAdvancements();
     } else {
@@ -192,7 +186,7 @@ public class AdvancementsTrackerScreen extends Screen {
       return;
     }
     this.selectedRootAdvancement = advancementEntry;
-    log.debug("Selected root entry {}", this.selectedRootAdvancement);
+    AdvancementsTracker.log.debug("Selected root entry {}", this.selectedRootAdvancement);
     this.reloadChildAdvancements();
     this.numberOfCompletedAdvancements =
         AdvancementsManager.getNumberOfCompletedAdvancements(this.selectedRootAdvancement);
@@ -221,7 +215,7 @@ public class AdvancementsTrackerScreen extends Screen {
     this.reloadChildAdvancements(CategorySortType.NORMAL);
   }
 
-  public void reloadChildAdvancements(CategorySortType sortType) {
+  private void reloadChildAdvancements(CategorySortType sortType) {
     if (this.selectedRootAdvancement == null) {
       return;
     }
@@ -252,7 +246,7 @@ public class AdvancementsTrackerScreen extends Screen {
       return;
     }
     this.selectedChildAdvancement = advancementEntry;
-    log.debug("Selected child entry {}", this.selectedChildAdvancement);
+    AdvancementsTracker.log.debug("Selected child entry {}", this.selectedChildAdvancement);
   }
 
   public AdvancementEntry getSelectedChildAdvancement() {
@@ -395,12 +389,6 @@ public class AdvancementsTrackerScreen extends Screen {
 
   @Override
   public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-    this.renderBackground(guiGraphics);
-
-    // Render panels for category and overview
-    this.advancementCategoryPanel.render(guiGraphics, mouseX, mouseY, partialTick);
-    this.advancementOverviewPanel.render(guiGraphics, mouseX, mouseY, partialTick);
-
     super.render(guiGraphics, mouseX, mouseY, partialTick);
 
     // Render stats
@@ -424,7 +412,8 @@ public class AdvancementsTrackerScreen extends Screen {
   }
 
   @Override
-  public void renderBackground(GuiGraphics guiGraphics) {
+  public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
     // Background
     guiGraphics.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
     guiGraphics.fillGradient(0, height - 12, this.width, this.height, -1072689136, -804253680);
@@ -457,11 +446,11 @@ public class AdvancementsTrackerScreen extends Screen {
   }
 
   @Override
-  public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+  public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
     if (this.showingAdvancementDetail()) {
-      this.showAdvancementDetailScreen.mouseScrolled(mouseX, mouseY, scroll);
+      this.showAdvancementDetailScreen.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
-    return super.mouseScrolled(mouseX, mouseY, scroll);
+    return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
   }
 
   @Override

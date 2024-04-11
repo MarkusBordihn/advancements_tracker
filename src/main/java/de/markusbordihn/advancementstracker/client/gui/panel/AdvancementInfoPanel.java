@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.client.gui.narration.NarratableEntry.NarrationPriority;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -37,15 +36,10 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-
-import net.minecraftforge.client.gui.widget.ScrollPanel;
-import net.minecraftforge.common.ForgeHooks;
-
-import de.markusbordihn.advancementstracker.Constants;
+import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
+import net.neoforged.neoforge.common.CommonHooks;
 
 public class AdvancementInfoPanel extends ScrollPanel {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private static final int PADDING = 6;
 
@@ -72,7 +66,7 @@ public class AdvancementInfoPanel extends ScrollPanel {
         result.add(null);
         continue;
       }
-      Component chat = ForgeHooks.newChatWithLinks(line, false);
+      Component chat = CommonHooks.newChatWithLinks(line, false);
       int maxTextLength = this.width - 12;
       if (maxTextLength >= 0) {
         Style textStyle = Style.EMPTY;

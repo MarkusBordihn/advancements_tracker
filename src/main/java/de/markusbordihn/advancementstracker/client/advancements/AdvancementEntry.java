@@ -21,43 +21,30 @@ package de.markusbordihn.advancementstracker.client.advancements;
 
 import java.util.Comparator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import java.util.List;
+import java.util.Locale;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementType;
+import net.minecraft.util.StringUtil;
 
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.AdvancementRewards;
 import net.minecraft.advancements.DisplayInfo;
-import net.minecraft.advancements.FrameType;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
-
-import net.minecraftforge.fml.loading.StringUtils;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.jetbrains.annotations.Nullable;
 
 public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
+  private final Advancement advancement;
 
-  Advancement advancement;
-  Advancement rootAdvancement;
+  final ResourceLocation rootId;
 
-  DisplayInfo displayInfo;
-  ResourceLocation rootId;
-
-  String[][] requirements;
-  int rootLevel = 0;
+  private final int rootLevel;
 
   // General
   private final ResourceLocation id;
@@ -67,92 +54,67 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   private ItemStack icon;
   private ResourceLocation background;
   private String description;
-  private String title;
-  private FrameType frameType;
+  private final String title;
+  private AdvancementType frameType;
 
   // Text Components
   private final Component descriptionComponent;
   private final Component titleComponent;
-  private int titleWidth;
   private int descriptionColor = 0xFFDDDDDD;
   private int titleColor = 0xFFFFFFFF;
 
   // Rewards
-  private AdvancementRewards rewards = null;
-  private ResourceLocation[] rewardsLoot = null;
-  private ResourceLocation[] rewardsRecipes = null;
-  private Integer rewardsExperience = null;
-  private boolean hasExperienceReward = false;
-  private boolean hasLootReward = false;
-  private boolean hasRecipesReward = false;
+  private final AdvancementRewards rewards;
   private boolean hasRewards = false;
-  private boolean hasRewardsData = false;
   private boolean hasRewardsLoaded = false;
 
   // Progress
-  private AdvancementEntryProgress advancementProgress;
+  private final AdvancementEntryProgress advancementProgress;
 
-  // Helper Tools
-  private final Font font;
-  private final Minecraft minecraft;
+  AdvancementEntry(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
+    this(advancementHolder, advancementProgress, null, 0);
+  }
 
-  AdvancementEntry(Advancement advancement, AdvancementProgress advancementProgress) {
-    // General Helper Tools
-    this.minecraft = Minecraft.getInstance();
-    this.font = this.minecraft.font;
+  AdvancementEntry(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress, @Nullable AdvancementNode root, int rootLevel) {
+    // Advancements Data
+    this.advancement = advancementHolder.value();
+    this.id = advancementHolder.id();
+    this.idString = id.toString();
+    this.rootId = root == null ? null : root.holder().id();
+    this.rootLevel = rootLevel;
 
     // Advancement Progress
-    this.advancementProgress = new AdvancementEntryProgress(advancement, advancementProgress);
-
-    // Advancements Data
-    this.advancement = advancement;
-    this.displayInfo = advancement.getDisplay();
-    this.id = advancement.getId();
-    this.idString = advancement.getId().toString();
-    this.rootAdvancement = advancement.getParent();
-    this.requirements = advancement.getRequirements();
-
-    if (this.rootAdvancement != null) {
-      while (this.rootAdvancement.getParent() != null) {
-        this.rootAdvancement = this.rootAdvancement.getParent();
-        rootLevel++;
-      }
-      this.rootId = this.rootAdvancement.getId();
-    }
+    this.advancementProgress = new AdvancementEntryProgress(advancementHolder, advancementProgress);
 
     // Handle display information like background, colors and description.
-    if (this.displayInfo != null) {
-      this.background = this.displayInfo.getBackground();
+    if (advancement.display().isPresent()) {
+      DisplayInfo displayInfo = advancement.display().get();
+      this.background = displayInfo.getBackground().orElse(null);
 
       // Title
-      this.icon = this.displayInfo.getIcon();
-      this.title = this.displayInfo.getTitle().getString();
-      this.titleWidth = this.font.width(this.title);
-      TextColor titleTextColor = this.displayInfo.getTitle().getStyle().getColor();
+      this.icon = displayInfo.getIcon();
+      this.title = displayInfo.getTitle().getString();
+      TextColor titleTextColor = displayInfo.getTitle().getStyle().getColor();
       if (titleTextColor != null) {
         this.titleColor = titleTextColor.getValue();
       }
 
       // Description
-      this.description = this.displayInfo.getDescription().getString();
-      TextColor descriptionTextColor = this.displayInfo.getDescription().getStyle().getColor();
+      this.description = displayInfo.getDescription().getString();
+      TextColor descriptionTextColor = displayInfo.getDescription().getStyle().getColor();
       if (descriptionTextColor != null) {
         this.descriptionColor = descriptionTextColor.getValue();
       }
 
-      this.frameType = this.displayInfo.getFrame();
+      this.frameType = displayInfo.getType();
     } else {
       this.background = null;
-      this.title = advancement.getId().toString();
-      this.titleWidth = this.font.width(this.title);
+      this.title = idString;
     }
 
     // Use background from root advancement if we don't have any itself.
-    if (this.background == null && this.rootAdvancement != null) {
-      DisplayInfo rootAdvancementDisplayInfo = this.rootAdvancement.getDisplay();
-      if (rootAdvancementDisplayInfo != null) {
-        this.background = rootAdvancementDisplayInfo.getBackground();
-      }
+    if (this.background == null && root != null) {
+      this.background = root.advancement().display().flatMap(DisplayInfo::getBackground).orElse(null);
     }
 
     // Stripped version for ui renderer.
@@ -160,11 +122,11 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
     this.titleComponent = Component.literal(stripControlCodes(this.title));
 
     // Handle Rewards like experience, loot and recipes.
-    this.rewards = advancement.getRewards();
+    this.rewards = advancement.rewards();
   }
 
   public boolean isTracked() {
-    return TrackedAdvancementsManager.isTrackedAdvancement(advancement);
+    return TrackedAdvancementsManager.isTrackedAdvancement(getId());
   }
 
   public AdvancementEntryProgress getProgress() {
@@ -204,7 +166,7 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   }
 
   public String getSortName() {
-    return StringUtils.toLowerCase(stripControlCodes(this.title));
+    return stripControlCodes(this.title).toLowerCase(Locale.ROOT);
   }
 
   public Component getTitle() {
@@ -215,10 +177,6 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
     return this.title;
   }
 
-  public int getTitleWidth() {
-    return this.titleWidth;
-  }
-
   public int getTitleColor() {
     return this.titleColor;
   }
@@ -227,120 +185,51 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
     this.advancementProgress.update(advancementProgress);
   }
 
-  public Integer getRewardsExperience() {
-    if (this.rewardsExperience == null) {
-      JsonObject rewardsData = getRewardsData();
-      if (rewardsData != null) {
-        // Getting rewards experience
-        this.rewardsExperience = GsonHelper.getAsInt(rewardsData, "experience", 0);
-        if (this.rewardsExperience > 0) {
-          this.hasExperienceReward = true;
-          this.hasRewardsData = true;
-        }
-      }
-    }
-    return this.rewardsExperience;
+  public int getRewardsExperience() {
+    return this.rewards.experience();
   }
 
-  public ResourceLocation[] getRewardsLoot() {
-    if (this.rewardsLoot == null) {
-      JsonObject rewardsData = getRewardsData();
-      if (rewardsData != null) {
-        // Getting Loot entries
-        JsonArray lootArray = GsonHelper.getAsJsonArray(rewardsData, "loot", new JsonArray());
-        if (lootArray != null) {
-          this.rewardsLoot = new ResourceLocation[lootArray.size()];
-          for (int j = 0; j < this.rewardsLoot.length; ++j) {
-            this.rewardsLoot[j] = new ResourceLocation(
-                GsonHelper.convertToString(lootArray.get(j), "loot[" + j + "]"));
-            this.hasLootReward = true;
-            this.hasRewardsData = true;
-          }
-        }
-      }
-    }
-    return this.rewardsLoot;
+  public List<ResourceLocation> getRewardsLoot() {
+    return this.rewards.loot();
   }
 
-  public ResourceLocation[] getRewardsRecipes() {
-    if (this.rewardsRecipes == null) {
-      JsonObject rewardsData = getRewardsData();
-      if (rewardsData != null) {
-        // Getting recipes entries
-        JsonArray recipesArray = GsonHelper.getAsJsonArray(rewardsData, "recipes", new JsonArray());
-        if (recipesArray != null) {
-          this.rewardsRecipes = new ResourceLocation[recipesArray.size()];
-          for (int k = 0; k < this.rewardsRecipes.length; ++k) {
-            this.rewardsRecipes[k] = new ResourceLocation(
-                GsonHelper.convertToString(recipesArray.get(k), "recipes[" + k + "]"));
-            this.hasRecipesReward = true;
-            this.hasRewardsData = true;
-          }
-        }
-      }
-    }
-    return this.rewardsRecipes;
-  }
-
-  private JsonObject getRewardsData() {
-    // There is no direct access to the rewards information, for this reason we
-    // are using the JsonObject to get access to the relevant information.
-    JsonElement rewardsJson = null;
-    try {
-      rewardsJson = this.rewards.serializeToJson();
-      if (rewardsJson != null) {
-        JsonObject rewardsObject = rewardsJson.getAsJsonObject();
-        if (rewardsObject != null) {
-          return rewardsObject;
-        }
-      }
-    } catch (JsonParseException | IllegalStateException e) {
-      // Ignore possible JSON Parse Exception and illegal state exceptions
-    }
-    return null;
+  public List<ResourceLocation> getRewardsRecipes() {
+    return this.rewards.recipes();
   }
 
   public boolean hasRewards() {
     if (!this.hasRewardsLoaded && this.rewards != null) {
-      this.hasRewards =
-          getRewardsExperience() != null || getRewardsLoot() != null || getRewardsRecipes() != null;
+      this.hasRewards = hasExperienceReward() || hasLootReward() || hasRecipesReward();
       this.hasRewardsLoaded = true;
     }
     return this.hasRewards;
   }
 
-  public boolean hasRewardsData() {
-    return this.hasRewards() && this.hasRewardsData;
-  }
-
   public boolean hasExperienceReward() {
-    return this.hasExperienceReward;
+    return getRewardsExperience() > 0;
   }
 
   public boolean hasLootReward() {
-    return this.hasLootReward;
+    return !getRewardsLoot().isEmpty();
   }
 
   public boolean hasRecipesReward() {
-    return this.hasRecipesReward;
+    return !getRewardsRecipes().isEmpty();
   }
 
   private static String stripControlCodes(String value) {
-    return value == null ? "" : net.minecraft.util.StringUtil.stripColor(value);
+    return value == null ? "" : StringUtil.stripColor(value);
   }
 
   @Override
   public boolean equals(Object object) {
-    if (object == null) {
-      return false;
-    }
-    if (!(object instanceof AdvancementEntry)) {
-      return false;
-    }
     if (object == this) {
       return true;
     }
-    return this.id == ((AdvancementEntry) object).id;
+    if (!(object instanceof AdvancementEntry other)) {
+      return false;
+    }
+    return this.id.equals(other.id);
   }
 
   @Override
@@ -355,9 +244,7 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   }
 
   public static Comparator<AdvancementEntry> sortByTitle() {
-    return (AdvancementEntry firstAdvancementEntry,
-        AdvancementEntry secondAdvancementEntry) -> firstAdvancementEntry.title
-            .compareTo(secondAdvancementEntry.title);
+    return Comparator.comparing(entry -> entry.title);
   }
 
   public static Comparator<AdvancementEntry> sortByStatus() {
@@ -373,7 +260,7 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
   @Override
   public String toString() {
-    if (this.rootAdvancement == null) {
+    if (this.rootId == null) {
       return String.format("[Root Advancement] (%s) %s: %s %s", this.frameType, this.id, this.title,
           this.advancementProgress.getProgress());
     }

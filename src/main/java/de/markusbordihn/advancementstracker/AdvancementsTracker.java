@@ -19,38 +19,27 @@
 
 package de.markusbordihn.advancementstracker;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkConstants;
 
-import de.markusbordihn.advancementstracker.client.gui.ClientGui;
+import com.mojang.logging.LogUtils;
 import de.markusbordihn.advancementstracker.client.keymapping.ModKeyMapping;
 import de.markusbordihn.advancementstracker.utils.StopModReposts;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
+import org.slf4j.Logger;
 
 @Mod(Constants.MOD_ID)
 public class AdvancementsTracker {
 
-  public AdvancementsTracker() {
+  public static final Logger log = LogUtils.getLogger();
 
-    // Make sure the mod being absent on the other network side does not cause the client to display
-    // the server as incompatible
-    ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
-        () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY,
-            (a, b) -> true));
-
-    final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+  public AdvancementsTracker(IEventBus modEventBus) {
 
     StopModReposts.checkStopModReposts();
 
-    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-      modEventBus.addListener(ClientGui::registerClientGui);
+    if (FMLEnvironment.dist.isClient()) {
       modEventBus.addListener(ModKeyMapping::registerKeyMapping);
-    });
+    }
   }
 
 }
