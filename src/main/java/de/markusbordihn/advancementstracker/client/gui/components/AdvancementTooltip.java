@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,31 +19,26 @@
 
 package de.markusbordihn.advancementstracker.client.gui.components;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.vertex.PoseStack;
-
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @OnlyIn(Dist.CLIENT)
 public class AdvancementTooltip extends GuiComponent {
 
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
+  private static int tooltipWith = 200;
+  private static int tooltipHeight = 200;
   private final AdvancementEntry advancementEntry;
   private final Font font;
   private final Minecraft minecraft;
-  private static int tooltipWith = 200;
-  private static int tooltipHeight = 200;
 
   public AdvancementTooltip(AdvancementEntry advancementEntry) {
     this.advancementEntry = advancementEntry;
@@ -54,9 +49,7 @@ public class AdvancementTooltip extends GuiComponent {
   public void renderTooltip(PoseStack poseStack, int mouseX, int mouseY) {
     poseStack.pushPose();
     font.draw(poseStack, advancementEntry.getTitle(), mouseX, mouseY, 0xFFFFFFFF);
-    fill(poseStack, mouseX, mouseY, mouseX + tooltipWith, mouseY + tooltipHeight,
-        0x80000000);
+    fill(poseStack, mouseX, mouseY, mouseX + tooltipWith, mouseY + tooltipHeight, 0x80000000);
     poseStack.popPose();
   }
-
 }

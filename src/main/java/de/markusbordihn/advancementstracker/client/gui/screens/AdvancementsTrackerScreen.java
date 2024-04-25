@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,123 +19,75 @@
 
 package de.markusbordihn.advancementstracker.client.gui.screens;
 
-import java.util.Comparator;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import org.lwjgl.glfw.GLFW;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.StringUtils;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.components.SmallButton;
 import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementCategoryPanel;
 import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementOverviewPanel;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.loading.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
 
 @OnlyIn(Dist.CLIENT)
 public class AdvancementsTrackerScreen extends Screen {
 
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
-  // Resources
   private static final ResourceLocation miscTexture =
       new ResourceLocation(Constants.MOD_ID, "textures/gui/misc.png");
-
-  // Layout
   private static final int PADDING = 10;
   private static final int STATUS_BAR_HEIGHT = 11;
   private static final int SCROLLBAR_WIDTH = 6;
-  private int buttonMargin = 1;
-  private int listWidth;
-
-  // Sorting Support
-  private enum CategorySortType implements Comparator<AdvancementEntry> {
-    NORMAL, A_TO_Z {
-      @Override
-      protected int compare(String name1, String name2) {
-        return name1.compareTo(name2);
-      }
-    },
-    Z_TO_A {
-      @Override
-      protected int compare(String name1, String name2) {
-        return name2.compareTo(name1);
-      }
-    };
-
-    Button button;
-
-    protected int compare(String name1, String name2) {
-      return name1.equals(name2) ? 1 : 0;
-    }
-
-    @Override
-    public int compare(AdvancementEntry advancement1, AdvancementEntry advancement2) {
-      return compare(advancement1.getSortName(), advancement2.getSortName());
-    }
-
-    Component getButtonText() {
-      return new TranslatableComponent(
-          Constants.MOD_PREFIX + "sort." + StringUtils.toLowerCase(name()));
-    }
-  }
-
-  // Stats
   private static boolean showCompletedAdvancements = true;
   private static boolean showOnlyRewardedAdvancements = false;
-  private CategorySortType sortType = CategorySortType.NORMAL;
-  private boolean sorted = false;
-
-  // Advancements
+  private static Screen parentScreen = null;
   Set<AdvancementEntry> rootAdvancements;
   Set<AdvancementEntry> childAdvancements;
+  private int listWidth;
+  private CategorySortType sortType = CategorySortType.NORMAL;
+  private boolean sorted = false;
   private AdvancementEntry selectedRootAdvancement = null;
   private AdvancementEntry selectedChildAdvancement = null;
-
-  // Panels
   private AdvancementCategoryPanel advancementCategoryPanel;
   private AdvancementOverviewPanel advancementOverviewPanel;
-
-  // Cached values
-  private static Screen parentScreen = null;
   private AdvancementDetailScreen showAdvancementDetailScreen;
   private boolean showAdvancementDetail = false;
   private int numberOfCompletedAdvancements = 0;
   private int numberOfRootAdvancements = 0;
   private int numberOfTotalAdvancements = 0;
+  private int completedCheckboxX;
+  private int onlyRewardedCheckboxX;
 
   public AdvancementsTrackerScreen() {
     this(new TextComponent("Advancements Tracker"));
   }
 
+  public AdvancementsTrackerScreen(Component component) {
+    super(component);
+  }
+
   public static void toggleVisibility() {
     Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null) {
-      return;
-    }
     if (!(minecraft.screen instanceof AdvancementsTrackerScreen)) {
       parentScreen = minecraft.screen;
       Minecraft.getInstance().setScreen(new AdvancementsTrackerScreen());
@@ -145,8 +97,12 @@ public class AdvancementsTrackerScreen extends Screen {
     }
   }
 
-  public AdvancementsTrackerScreen(Component component) {
-    super(component);
+  private static void toggleShowCompletedAdvancements() {
+    showCompletedAdvancements = !showCompletedAdvancements;
+  }
+
+  private static void toggleShowOnlyRewardedAdvancements() {
+    showOnlyRewardedAdvancements = !showOnlyRewardedAdvancements;
   }
 
   public Minecraft getMinecraftInstance() {
@@ -162,8 +118,8 @@ public class AdvancementsTrackerScreen extends Screen {
     if (this.rootAdvancements == null) {
       this.reloadRootAdvancements();
     }
-    this.rootAdvancements
-        .forEach(advancementEntry -> listViewConsumer.accept(newEntry.apply(advancementEntry)));
+    this.rootAdvancements.forEach(
+        advancementEntry -> listViewConsumer.accept(newEntry.apply(advancementEntry)));
   }
 
   public void reloadRootAdvancements() {
@@ -185,10 +141,13 @@ public class AdvancementsTrackerScreen extends Screen {
     this.sortType = newSort;
 
     for (CategorySortType sort : CategorySortType.values()) {
-      if (sort.button != null)
-        sort.button.active = sortType != sort;
+      if (sort.button != null) sort.button.active = sortType != sort;
     }
     sorted = false;
+  }
+
+  public AdvancementEntry getSelectedRootAdvancement() {
+    return this.selectedRootAdvancement;
   }
 
   public void setSelectedRootAdvancement(AdvancementCategoryPanel.RootAdvancementEntry entry) {
@@ -205,21 +164,18 @@ public class AdvancementsTrackerScreen extends Screen {
         AdvancementsManager.getNumberOfAdvancements(this.selectedRootAdvancement);
   }
 
-  public AdvancementEntry getSelectedRootAdvancement() {
-    return this.selectedRootAdvancement;
-  }
-
   public <T extends ObjectSelectionList.Entry<T>> void buildChildAdvancementsList(
       Consumer<T> listViewConsumer, Function<AdvancementEntry, T> newEntry) {
     if (this.childAdvancements == null) {
       return;
     }
-    this.childAdvancements.forEach(advancementEntry -> {
-      if ((showCompletedAdvancements || !advancementEntry.getProgress().isDone())
-          && (!showOnlyRewardedAdvancements || advancementEntry.hasRewards())) {
-        listViewConsumer.accept(newEntry.apply(advancementEntry));
-      }
-    });
+    this.childAdvancements.forEach(
+        advancementEntry -> {
+          if ((showCompletedAdvancements || !advancementEntry.getProgress().isDone())
+              && (!showOnlyRewardedAdvancements || advancementEntry.hasRewards())) {
+            listViewConsumer.accept(newEntry.apply(advancementEntry));
+          }
+        });
   }
 
   public void reloadChildAdvancements() {
@@ -243,12 +199,17 @@ public class AdvancementsTrackerScreen extends Screen {
 
   public void showAdvancementDetail(boolean visible) {
     this.showAdvancementDetail = visible;
-    this.showAdvancementDetailScreen = visible && this.selectedChildAdvancement != null
-        ? new AdvancementDetailScreen(this.selectedChildAdvancement)
-        : null;
+    this.showAdvancementDetailScreen =
+        visible && this.selectedChildAdvancement != null
+            ? new AdvancementDetailScreen(this.selectedChildAdvancement)
+            : null;
     if (this.showAdvancementDetailScreen != null) {
       this.showAdvancementDetailScreen.init(this.minecraft, width, height);
     }
+  }
+
+  public AdvancementEntry getSelectedChildAdvancement() {
+    return this.selectedChildAdvancement;
   }
 
   public void setSelectedChildAdvancement(AdvancementOverviewPanel.ChildAdvancementEntry entry) {
@@ -260,21 +221,26 @@ public class AdvancementsTrackerScreen extends Screen {
     log.debug("Selected child entry {}", this.selectedChildAdvancement);
   }
 
-  public AdvancementEntry getSelectedChildAdvancement() {
-    return this.selectedChildAdvancement;
-  }
-
   private void renderNumberOfRootAdvancements(PoseStack poseStack) {
     if (numberOfRootAdvancements > 0) {
       float scaleFactor = 0.75f;
-      TranslatableComponent text = new TranslatableComponent(
-          Constants.ADVANCEMENTS_SCREEN_PREFIX + "numCategories", numberOfRootAdvancements);
+      TranslatableComponent text =
+          new TranslatableComponent(
+              Constants.ADVANCEMENTS_SCREEN_PREFIX + "numCategories", numberOfRootAdvancements);
       poseStack.pushPose();
       poseStack.scale(scaleFactor, scaleFactor, scaleFactor);
-      font.drawShadow(poseStack, text, (this.listWidth - PADDING - 52.0f) / scaleFactor,
-          (this.height - 8) / scaleFactor, 0xFFFFFF);
-      font.draw(poseStack, text, (this.listWidth - PADDING - 52.0f) / scaleFactor,
-          (this.height - 8) / scaleFactor, 0xFFFFFF);
+      font.drawShadow(
+          poseStack,
+          text,
+          (this.listWidth - PADDING - 52.0f) / scaleFactor,
+          (this.height - 8) / scaleFactor,
+          0xFFFFFF);
+      font.draw(
+          poseStack,
+          text,
+          (this.listWidth - PADDING - 52.0f) / scaleFactor,
+          (this.height - 8) / scaleFactor,
+          0xFFFFFF);
       poseStack.popPose();
     }
   }
@@ -283,32 +249,47 @@ public class AdvancementsTrackerScreen extends Screen {
     if (this.numberOfTotalAdvancements > 0) {
       float scaleFactor = 0.75f;
       TranslatableComponent text =
-          new TranslatableComponent(Constants.ADVANCEMENTS_SCREEN_PREFIX + "numCompleted",
-              this.numberOfCompletedAdvancements, this.numberOfTotalAdvancements);
+          new TranslatableComponent(
+              Constants.ADVANCEMENTS_SCREEN_PREFIX + "numCompleted",
+              this.numberOfCompletedAdvancements,
+              this.numberOfTotalAdvancements);
 
       poseStack.pushPose();
       poseStack.scale(scaleFactor, scaleFactor, scaleFactor);
-      font.drawShadow(poseStack, text, (width - 92.0f) / scaleFactor,
-          (this.height - 8) / scaleFactor, 0xFFFFFF);
-      font.draw(poseStack, text, (width - 92.0f) / scaleFactor, (this.height - 8) / scaleFactor,
+      font.drawShadow(
+          poseStack,
+          text,
+          (width - 92.0f) / scaleFactor,
+          (this.height - 8) / scaleFactor,
+          0xFFFFFF);
+      font.draw(
+          poseStack,
+          text,
+          (width - 92.0f) / scaleFactor,
+          (this.height - 8) / scaleFactor,
           0xFFFFFF);
       poseStack.popPose();
     }
   }
 
   private void renderCompletedCheckbox(PoseStack poseStack) {
-    int iconPosition = 22;
-    if (showCompletedAdvancements) {
-      iconPosition = 42;
-    }
     RenderSystem.setShaderColor(1, 1, 1, 1);
     RenderSystem.setShaderTexture(0, miscTexture);
 
+    this.completedCheckboxX = this.listWidth;
     float scaleFactorIcon = 0.6f;
     poseStack.pushPose();
     poseStack.scale(scaleFactorIcon, scaleFactorIcon, scaleFactorIcon);
-    GuiComponent.blit(poseStack, Math.round((this.listWidth) / scaleFactorIcon),
-        Math.round((this.height - 10) / scaleFactorIcon), iconPosition, 6, 15, 15, 256, 256);
+    GuiComponent.blit(
+        poseStack,
+        Math.round(this.completedCheckboxX / scaleFactorIcon),
+        Math.round((this.height - 10) / scaleFactorIcon),
+        showCompletedAdvancements ? 42 : 22,
+        6,
+        15,
+        15,
+        256,
+        256);
     poseStack.popPose();
 
     float scaleFactorText = 0.75f;
@@ -317,30 +298,39 @@ public class AdvancementsTrackerScreen extends Screen {
 
     poseStack.pushPose();
     poseStack.scale(scaleFactorText, scaleFactorText, scaleFactorText);
-    font.drawShadow(poseStack, text, Math.round((this.listWidth + 12.0f) / scaleFactorText),
-        Math.round((this.height - 8) / scaleFactorText), 0xFFFFFF);
-    font.draw(poseStack, text, Math.round((this.listWidth + 12.0f) / scaleFactorText),
-        Math.round((this.height - 8) / scaleFactorText), 0xFFFFFF);
+    font.drawShadow(
+        poseStack,
+        text,
+        Math.round((this.listWidth + 12.0f) / scaleFactorText),
+        Math.round((this.height - 8) / scaleFactorText),
+        0xFFFFFF);
+    font.draw(
+        poseStack,
+        text,
+        Math.round((this.listWidth + 12.0f) / scaleFactorText),
+        Math.round((this.height - 8) / scaleFactorText),
+        0xFFFFFF);
     poseStack.popPose();
   }
 
-  private static void toggleShowCompletedAdvancements() {
-    showCompletedAdvancements = !showCompletedAdvancements;
-  }
-
   private void renderOnlyRewardedCheckbox(PoseStack poseStack) {
-    int iconPosition = 22;
-    if (showOnlyRewardedAdvancements) {
-      iconPosition = 42;
-    }
     RenderSystem.setShaderColor(1, 1, 1, 1);
     RenderSystem.setShaderTexture(0, miscTexture);
 
+    this.onlyRewardedCheckboxX = this.listWidth + 78;
     float scaleFactorIcon = 0.6f;
     poseStack.pushPose();
     poseStack.scale(scaleFactorIcon, scaleFactorIcon, scaleFactorIcon);
-    GuiComponent.blit(poseStack, Math.round((this.listWidth + 78.0f) / scaleFactorIcon),
-        Math.round((this.height - 10) / scaleFactorIcon), iconPosition, 6, 15, 15, 256, 256);
+    GuiComponent.blit(
+        poseStack,
+        Math.round(this.onlyRewardedCheckboxX / scaleFactorIcon),
+        Math.round((this.height - 10) / scaleFactorIcon),
+        showOnlyRewardedAdvancements ? 42 : 22,
+        6,
+        15,
+        15,
+        256,
+        256);
     poseStack.popPose();
 
     float scaleFactorText = 0.75f;
@@ -349,19 +339,24 @@ public class AdvancementsTrackerScreen extends Screen {
         new TranslatableComponent(Constants.ADVANCEMENTS_SCREEN_PREFIX + "showOnlyRewarded");
     poseStack.pushPose();
     poseStack.scale(scaleFactorText, scaleFactorText, scaleFactorText);
-    font.drawShadow(poseStack, text, Math.round((this.listWidth + 90.0f) / scaleFactorText),
-        Math.round((this.height - 8) / scaleFactorText), fontColor);
-    font.draw(poseStack, text, Math.round((this.listWidth + 90.0f) / scaleFactorText),
-        Math.round((this.height - 8) / scaleFactorText), fontColor);
+    font.drawShadow(
+        poseStack,
+        text,
+        Math.round((this.listWidth + 90.0f) / scaleFactorText),
+        Math.round((this.height - 8) / scaleFactorText),
+        fontColor);
+    font.draw(
+        poseStack,
+        text,
+        Math.round((this.listWidth + 90.0f) / scaleFactorText),
+        Math.round((this.height - 8) / scaleFactorText),
+        fontColor);
     poseStack.popPose();
   }
 
-  private static void toggleShowOnlyRewardedAdvancements() {
-    showOnlyRewardedAdvancements = !showOnlyRewardedAdvancements;
-  }
-
   public boolean showingAdvancementDetail() {
-    return this.showAdvancementDetail && this.selectedChildAdvancement != null
+    return this.showAdvancementDetail
+        && this.selectedChildAdvancement != null
         && this.showAdvancementDetailScreen != null;
   }
 
@@ -377,11 +372,20 @@ public class AdvancementsTrackerScreen extends Screen {
     int categoryPanelLeftPosition = 0;
 
     // Define scroll panels
-    this.advancementCategoryPanel = new AdvancementCategoryPanel(this, this.listWidth, topPosition,
-        categoryPanelLeftPosition, height - STATUS_BAR_HEIGHT);
-    this.advancementOverviewPanel = new AdvancementOverviewPanel(this,
-        width - this.listWidth - (2 * SCROLLBAR_WIDTH) - 1, topPosition,
-        this.advancementCategoryPanel.getWidth() + SCROLLBAR_WIDTH, height - STATUS_BAR_HEIGHT);
+    this.advancementCategoryPanel =
+        new AdvancementCategoryPanel(
+            this,
+            this.listWidth,
+            topPosition,
+            categoryPanelLeftPosition,
+            height - STATUS_BAR_HEIGHT);
+    this.advancementOverviewPanel =
+        new AdvancementOverviewPanel(
+            this,
+            width - this.listWidth - (2 * SCROLLBAR_WIDTH) - 1,
+            topPosition,
+            this.advancementCategoryPanel.getWidth() + SCROLLBAR_WIDTH,
+            height - STATUS_BAR_HEIGHT);
 
     // Add Scroll panels for advancements
     this.addRenderableWidget(this.advancementCategoryPanel);
@@ -390,19 +394,35 @@ public class AdvancementsTrackerScreen extends Screen {
     // Sort Buttons for root advancements
     int buttonPositionX = 5;
     int buttonPositionY = this.height - 11;
-    CategorySortType.NORMAL.button = new SmallButton(buttonPositionX, buttonPositionY, 20, 10,
-        CategorySortType.NORMAL.getButtonText(),
-        b -> resortRootAdvancements(CategorySortType.NORMAL));
+    CategorySortType.NORMAL.button =
+        new SmallButton(
+            buttonPositionX,
+            buttonPositionY,
+            20,
+            10,
+            CategorySortType.NORMAL.getButtonText(),
+            b -> resortRootAdvancements(CategorySortType.NORMAL));
     this.addRenderableWidget(CategorySortType.NORMAL.button);
+    int buttonMargin = 1;
     buttonPositionX += 20 + buttonMargin;
-    CategorySortType.A_TO_Z.button = new SmallButton(buttonPositionX, buttonPositionY, 20, 10,
-        CategorySortType.A_TO_Z.getButtonText(),
-        b -> resortRootAdvancements(CategorySortType.A_TO_Z));
+    CategorySortType.A_TO_Z.button =
+        new SmallButton(
+            buttonPositionX,
+            buttonPositionY,
+            20,
+            10,
+            CategorySortType.A_TO_Z.getButtonText(),
+            b -> resortRootAdvancements(CategorySortType.A_TO_Z));
     this.addRenderableWidget(CategorySortType.A_TO_Z.button);
     buttonPositionX += 20 + buttonMargin;
-    CategorySortType.Z_TO_A.button = new SmallButton(buttonPositionX, buttonPositionY, 20, 10,
-        CategorySortType.Z_TO_A.getButtonText(),
-        b -> resortRootAdvancements(CategorySortType.Z_TO_A));
+    CategorySortType.Z_TO_A.button =
+        new SmallButton(
+            buttonPositionX,
+            buttonPositionY,
+            20,
+            10,
+            CategorySortType.Z_TO_A.getButtonText(),
+            b -> resortRootAdvancements(CategorySortType.Z_TO_A));
     this.addRenderableWidget(CategorySortType.Z_TO_A.button);
     reloadRootAdvancements();
 
@@ -451,7 +471,10 @@ public class AdvancementsTrackerScreen extends Screen {
 
   @Override
   public boolean mouseClicked(double mouseX, double mouseY, int button) {
-    if (button == 0 && this.showingAdvancementDetail()) {
+    if (button != 0) {
+      super.mouseClicked(mouseX, mouseY, button);
+    }
+    if (this.showingAdvancementDetail()) {
       if (this.showAdvancementDetailScreen.isMouseOver(mouseX, mouseY)) {
         this.showAdvancementDetailScreen.mouseClicked(mouseX, mouseY, button);
       } else {
@@ -459,13 +482,15 @@ public class AdvancementsTrackerScreen extends Screen {
         this.showAdvancementDetail(false);
       }
       return false;
-    } else if (button == 0 && mouseX > this.listWidth + 10.0f && mouseX < this.listWidth + 18.0f
+    } else if (mouseX > this.completedCheckboxX
+        && mouseX < this.completedCheckboxX + 8
         && mouseY > this.height - 11) {
-      // Handle clicks on the show complete advancements checkbox.
+      // Handle clicks on the show complete advancements' checkbox.
       toggleShowCompletedAdvancements();
       reloadChildAdvancements();
       return false;
-    } else if (button == 0 && mouseX > this.listWidth + 65.0f && mouseX < this.listWidth + 73.0f
+    } else if (mouseX > this.onlyRewardedCheckboxX
+        && mouseX < this.onlyRewardedCheckboxX + 8
         && mouseY > this.height - 11) {
       // Handle clicks on the show only rewarded advancements.
       toggleShowOnlyRewardedAdvancements();
@@ -484,8 +509,8 @@ public class AdvancementsTrackerScreen extends Screen {
   }
 
   @Override
-  public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX,
-      double deltaY) {
+  public boolean mouseDragged(
+      double mouseX, double mouseY, int button, double deltaX, double deltaY) {
     if (this.showingAdvancementDetail()) {
       this.showAdvancementDetailScreen.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
@@ -508,6 +533,39 @@ public class AdvancementsTrackerScreen extends Screen {
       return false;
     } else {
       return super.keyPressed(key1, key2, key3);
+    }
+  }
+
+  // Sorting Support
+  public enum CategorySortType implements Comparator<AdvancementEntry> {
+    NORMAL,
+    A_TO_Z {
+      @Override
+      protected int compare(String name1, String name2) {
+        return name1.compareTo(name2);
+      }
+    },
+    Z_TO_A {
+      @Override
+      protected int compare(String name1, String name2) {
+        return name2.compareTo(name1);
+      }
+    };
+
+    Button button;
+
+    protected int compare(String name1, String name2) {
+      return name1.equals(name2) ? 1 : 0;
+    }
+
+    @Override
+    public int compare(AdvancementEntry advancement1, AdvancementEntry advancement2) {
+      return compare(advancement1.getSortName(), advancement2.getSortName());
+    }
+
+    Component getButtonText() {
+      return new TranslatableComponent(
+          Constants.MOD_PREFIX + "sort." + StringUtils.toLowerCase(name()));
     }
   }
 }

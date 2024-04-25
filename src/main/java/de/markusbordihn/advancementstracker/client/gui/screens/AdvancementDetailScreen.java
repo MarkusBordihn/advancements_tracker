@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,28 +19,23 @@
 
 package de.markusbordihn.advancementstracker.client.gui.screens;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
+import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntryProgress;
+import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementInfoPanel;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
-import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntryProgress;
-import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementInfoPanel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @OnlyIn(Dist.CLIENT)
 public class AdvancementDetailScreen extends Screen {
@@ -95,7 +90,8 @@ public class AdvancementDetailScreen extends Screen {
     }
 
     // Display reward information.
-    if (this.advancementEntry.hasExperienceReward() || this.advancementEntry.hasLootReward()
+    if (this.advancementEntry.hasExperienceReward()
+        || this.advancementEntry.hasLootReward()
         || this.advancementEntry.hasRecipesReward()) {
       info.add(" ");
       info.add(
@@ -103,8 +99,11 @@ public class AdvancementDetailScreen extends Screen {
 
       if (this.advancementEntry.hasExperienceReward()) {
         info.add(
-            "+ " + new TranslatableComponent(Constants.ADVANCEMENTS_SCREEN_PREFIX + "experience",
-                this.advancementEntry.getRewardsExperience()).getString());
+            "+ "
+                + new TranslatableComponent(
+                        Constants.ADVANCEMENTS_SCREEN_PREFIX + "experience",
+                        this.advancementEntry.getRewardsExperience())
+                    .getString());
       }
 
       if (this.advancementEntry.hasLootReward()) {
@@ -135,7 +134,6 @@ public class AdvancementDetailScreen extends Screen {
     this.addRenderableWidget(this.advancementInfoPanel);
   }
 
-
   @Override
   public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
     this.renderBackground(poseStack);
@@ -162,12 +160,18 @@ public class AdvancementDetailScreen extends Screen {
 
     // Frame will be constructed in two parts, top and bottom.
     this.blit(poseStack, left, top, 0, 0, maxWidth, heightPerPart);
-    this.blit(poseStack, left, top + heightPerPart, 0, 150 - heightPerPart, maxWidth,
-        heightPerPart + 10);
+    this.blit(
+        poseStack, left, top + heightPerPart, 0, 150 - heightPerPart, maxWidth, heightPerPart + 10);
 
     // Background with gradient.
-    this.fillGradient(poseStack, left + 9, top + 18, left + maxWidth - 9, top + maxHeight - 20,
-        -1072689136, -804253680);
+    this.fillGradient(
+        poseStack,
+        left + 9,
+        top + 18,
+        left + maxWidth - 9,
+        top + maxHeight - 20,
+        -1072689136,
+        -804253680);
     RenderSystem.disableBlend();
 
     // Title
@@ -175,7 +179,7 @@ public class AdvancementDetailScreen extends Screen {
     font.draw(poseStack, this.title, left + 22f, top + 6f, advancementEntry.getTitleColor());
 
     // Icon
-    if (this.advancementEntry.getIcon() != null) {
+    if (this.advancementEntry.getIcon() != null && minecraft != null) {
       minecraft.getItemRenderer().renderGuiItem(this.advancementEntry.getIcon(), left + 4, top + 1);
     }
 
@@ -184,8 +188,9 @@ public class AdvancementDetailScreen extends Screen {
 
   @Override
   public boolean isMouseOver(double mouseX, double mouseY) {
-    return mouseY >= this.top && mouseY <= this.top + this.maxHeight && mouseX >= this.left
+    return mouseY >= this.top
+        && mouseY <= this.top + this.maxHeight
+        && mouseX >= this.left
         && mouseX <= this.left + this.maxWidth;
   }
-
 }

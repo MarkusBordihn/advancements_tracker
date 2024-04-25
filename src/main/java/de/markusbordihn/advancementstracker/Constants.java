@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -23,8 +23,6 @@ import net.minecraft.network.chat.TextComponent;
 
 public final class Constants {
 
-  protected Constants() {}
-
   // General Mod definitions
   public static final String LOG_NAME = "Advancements Tracker";
   public static final String LOG_REGISTER_PREFIX = " Register AdvancementsTracker";
@@ -34,15 +32,12 @@ public final class Constants {
   public static final String MOD_NAME = "Advancements Tracker";
   public static final String MOD_URL =
       "https://www.curseforge.com/minecraft/mc-mods/advancements-tracker";
-
   // Prefixes
   public static final String KEY_PREFIX = MOD_PREFIX + "keys.";
   public static final String ADVANCEMENTS_SCREEN_PREFIX = MOD_PREFIX + "advancementsScreen.";
   public static final String ADVANCEMENTS_WIDGET_PREFIX = MOD_PREFIX + "advancementsWidget.";
-
   // Pre-defined Texts
   public static final TextComponent ELLIPSIS = new TextComponent("\u2026");
-
   // Colors
   public static final int FONT_COLOR_BLACK = 0;
   public static final int FONT_COLOR_DARK_GREEN = 43520;
@@ -52,4 +47,5 @@ public final class Constants {
   public static final int FONT_COLOR_RED = 16733525;
   public static final int FONT_COLOR_WHITE = 16777215;
   public static final int FONT_COLOR_YELLOW = 16777045;
+  private Constants() {}
 }

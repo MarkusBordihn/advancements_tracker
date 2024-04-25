@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,16 +19,13 @@
 
 package de.markusbordihn.advancementstracker.client.gui;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.client.Minecraft;
-
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ClientGui {
 
@@ -40,9 +37,10 @@ public class ClientGui {
 
     log.info("{} Client Gui and Widget ...", Constants.LOG_REGISTER_PREFIX);
 
-    event.enqueueWork(() -> {
-      Minecraft minecraft = Minecraft.getInstance();
-      MinecraftForge.EVENT_BUS.register(new AdvancementsTrackerWidget(minecraft));
-    });
+    event.enqueueWork(
+        () -> {
+          Minecraft minecraft = Minecraft.getInstance();
+          MinecraftForge.EVENT_BUS.register(new AdvancementsTrackerWidget(minecraft));
+        });
   }
 }

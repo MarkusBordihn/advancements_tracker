@@ -1,13 +1,13 @@
 {
-    "recommendations": [
-        "bungcip.better-toml",
-        "davidanson.vscode-markdownlint",
-        "dotjoshjohnson.xml",
-        "naco-siren.gradle-language",
-        "sonarsource.sonarlint-vscode",
-        "spgoding.datapack-language-server",
-        "streetsidesoftware.code-spell-checker",
-        "vscjava.vscode-gradle",
-        "vscjava.vscode-java-pack",
-    ]
+  "recommendations": [
+    "bungcip.better-toml",
+    "davidanson.vscode-markdownlint",
+    "dotjoshjohnson.xml",
+    "naco-siren.gradle-language",
+    "sonarsource.sonarlint-vscode",
+    "spgoding.datapack-language-server",
+    "streetsidesoftware.code-spell-checker",
+    "vscjava.vscode-gradle",
+    "vscjava.vscode-java-pack"
+  ]
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,19 +19,16 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import de.markusbordihn.advancementstracker.Constants;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.client.Minecraft;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class AdvancementsEventManager {
@@ -73,16 +70,31 @@ public class AdvancementsEventManager {
 
       // Make sure that we are covering changes which are not catch by the advancements events.
       Minecraft minecraft = Minecraft.getInstance();
-      if (minecraft != null && minecraft.player != null && minecraft.player.connection != null
-          && minecraft.player.connection.getAdvancements() != null && !minecraft.player.connection
-              .getAdvancements().getAdvancements().getAllAdvancements().isEmpty()) {
-        int possibleNumberOfAdvancements = minecraft.player.connection.getAdvancements()
-            .getAdvancements().getAllAdvancements().size();
-        if (possibleNumberOfAdvancements > numberOfAdvancements) {
-          log.debug("Force sync of advancements because it seems we are missing some {} vs. {}",
-              possibleNumberOfAdvancements, numberOfAdvancements);
-          ClientAdvancementManager.reset();
-          numberOfAdvancements = possibleNumberOfAdvancements;
+      if (minecraft.player != null) {
+        minecraft.player.connection.getAdvancements();
+        if (!minecraft
+            .player
+            .connection
+            .getAdvancements()
+            .getAdvancements()
+            .getAllAdvancements()
+            .isEmpty()) {
+          int possibleNumberOfAdvancements =
+              minecraft
+                  .player
+                  .connection
+                  .getAdvancements()
+                  .getAdvancements()
+                  .getAllAdvancements()
+                  .size();
+          if (possibleNumberOfAdvancements > numberOfAdvancements) {
+            log.debug(
+                "Force sync of advancements because it seems we are missing some {} vs. {}",
+                possibleNumberOfAdvancements,
+                numberOfAdvancements);
+            ClientAdvancementManager.reset();
+            numberOfAdvancements = possibleNumberOfAdvancements;
+          }
         }
       }
     }
@@ -92,5 +104,4 @@ public class AdvancementsEventManager {
     log.debug("Resetting number of advancements ...");
     numberOfAdvancements = 0;
   }
-
 }

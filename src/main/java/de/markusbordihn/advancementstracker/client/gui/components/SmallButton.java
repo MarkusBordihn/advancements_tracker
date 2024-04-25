@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -21,7 +21,6 @@ package de.markusbordihn.advancementstracker.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
@@ -31,10 +30,9 @@ import net.minecraft.util.Mth;
 
 public class SmallButton extends Button {
 
+  private static final float SCALING = 0.55f;
   private final Minecraft minecraft;
   private final Font font;
-
-  private static final float SCALING = 0.55f;
   private final int scaledX;
   private final int scaledY;
   private final int scaledWidth;
@@ -50,8 +48,14 @@ public class SmallButton extends Button {
     this.scaledHeight = Math.round(this.height / SCALING);
   }
 
-  public SmallButton(int x, int y, int width, int height, Component component,
-      Button.OnPress onPress, Button.OnTooltip onTooltip) {
+  public SmallButton(
+      int x,
+      int y,
+      int width,
+      int height,
+      Component component,
+      Button.OnPress onPress,
+      Button.OnTooltip onTooltip) {
     super(x, y, width, height, component, onPress, onTooltip);
     this.minecraft = Minecraft.getInstance();
     this.font = this.minecraft.font;
@@ -73,14 +77,26 @@ public class SmallButton extends Button {
     // Scaling down the button images
     int buttonPosTop = (46 + this.getYImage(this.isHoveredOrFocused()) * 20) / 2;
     blit(poseStack, this.x, this.y, 0, buttonPosTop, this.width / 2, this.height, 256, 128);
-    blit(poseStack, this.x + this.width / 2, this.y, 200 - this.width / 2.0f, buttonPosTop,
-        this.width / 2, this.height, 256, 128);
+    blit(
+        poseStack,
+        this.x + this.width / 2,
+        this.y,
+        200 - this.width / 2.0f,
+        buttonPosTop,
+        this.width / 2,
+        this.height,
+        256,
+        128);
     this.renderBg(poseStack, minecraft, mouseX, mouseY);
 
     // Scaling down button text
     poseStack.pushPose();
     poseStack.scale(SCALING, SCALING, SCALING);
-    drawCenteredString(poseStack, font, this.getMessage(), this.scaledX + this.scaledWidth / 2,
+    drawCenteredString(
+        poseStack,
+        font,
+        this.getMessage(),
+        this.scaledX + this.scaledWidth / 2,
         this.scaledY + (this.scaledHeight - 8) / 2,
         getFGColor() | Mth.ceil(this.alpha * 255.0F) << 24);
     poseStack.popPose();
@@ -88,7 +104,5 @@ public class SmallButton extends Button {
     if (this.isHoveredOrFocused()) {
       this.renderToolTip(poseStack, mouseX, mouseY);
     }
-
   }
-
 }

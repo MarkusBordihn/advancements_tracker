@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,30 +19,26 @@
 
 package de.markusbordihn.advancementstracker.client.gui.panel;
 
-import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.locale.Language;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.TrackedAdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.components.AdvancementTooltip;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdvancementOverviewPanel
     extends ObjectSelectionList<AdvancementOverviewPanel.ChildAdvancementEntry> {
@@ -55,9 +51,14 @@ public class AdvancementOverviewPanel
   private AdvancementsTrackerScreen parent;
   private AdvancementTooltip advancementTooltip;
 
-  public AdvancementOverviewPanel(AdvancementsTrackerScreen parent, int listWidth, int top,
-      int listLeft, int bottom) {
-    super(parent.getMinecraftInstance(), listWidth, parent.height, top, bottom,
+  public AdvancementOverviewPanel(
+      AdvancementsTrackerScreen parent, int listWidth, int top, int listLeft, int bottom) {
+    super(
+        parent.getMinecraftInstance(),
+        listWidth,
+        parent.height,
+        top,
+        bottom,
         parent.getFontRenderer().lineHeight * 4 + 12);
     this.parent = parent;
     this.listWidth = listWidth;
@@ -71,8 +72,8 @@ public class AdvancementOverviewPanel
     this.clearEntries();
 
     // Build child advancements list.
-    parent.buildChildAdvancementsList(this::addEntry,
-        mod -> new ChildAdvancementEntry(mod, this.parent));
+    parent.buildChildAdvancementsList(
+        this::addEntry, mod -> new ChildAdvancementEntry(mod, this.parent));
 
     // Reset scroll bar
     if (getScrollAmount() > 0) {
@@ -85,6 +86,35 @@ public class AdvancementOverviewPanel
 
   public void setAdvancementTooltip(AdvancementTooltip advancementTooltip) {
     this.advancementTooltip = advancementTooltip;
+  }
+
+  @Override
+  public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+    super.render(poseStack, mouseX, mouseY, partialTick);
+
+    // Render tool tips separate to make sure they are fully visible.
+    if (this.advancementTooltip != null) {
+      this.advancementTooltip = null;
+    }
+  }
+
+  @Override
+  public boolean isMouseOver(double mouseX, double mouseY) {
+    return !parent.showingAdvancementDetail()
+        && mouseY >= this.y0
+        && mouseY <= this.y1
+        && mouseX >= this.x0
+        && mouseX <= this.x1 + 5;
+  }
+
+  @Override
+  protected int getScrollbarPosition() {
+    return this.listWidth + this.listLeft;
+  }
+
+  @Override
+  public int getRowWidth() {
+    return this.listWidth;
   }
 
   public class ChildAdvancementEntry extends ObjectSelectionList.Entry<ChildAdvancementEntry> {
@@ -130,10 +160,14 @@ public class AdvancementOverviewPanel
       this.iconWidth = 18;
       this.maxFontWidth = listWidth - this.iconWidth - 4;
       this.titleWidth =
-          font.width(advancementEntry.getTitle()) > this.maxFontWidth ? this.maxFontWidth - 6
+          font.width(advancementEntry.getTitle()) > this.maxFontWidth
+              ? this.maxFontWidth - 6
               : this.maxFontWidth;
-      this.titleParts = Language.getInstance().getVisualOrder(
-          FormattedText.composite(font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
+      this.titleParts =
+          Language.getInstance()
+              .getVisualOrder(
+                  FormattedText.composite(
+                      font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
       this.descriptionParts = font.split(advancementEntry.getDescription(), this.maxFontWidth);
     }
 
@@ -148,8 +182,8 @@ public class AdvancementOverviewPanel
       RenderSystem.setShaderColor(0.5f, 0.5f, 0.5f, 0.25f);
       RenderSystem.setShaderTexture(0, this.advancementEntry.getBackground());
       poseStack.pushPose();
-      GuiComponent.blit(poseStack, getLeft() + 1, top - 1, 0, 0, entryWidth - 2, entryHeight + 1,
-          16, 16);
+      GuiComponent.blit(
+          poseStack, getLeft() + 1, top - 1, 0, 0, entryWidth - 2, entryHeight + 1, 16, 16);
       poseStack.popPose();
     }
 
@@ -157,8 +191,9 @@ public class AdvancementOverviewPanel
       if (this.advancementEntry.getIcon() == null) {
         return;
       }
-      minecraft.getItemRenderer().renderGuiItem(this.advancementEntry.getIcon(), getLeft() + 3,
-          top + 2);
+      minecraft
+          .getItemRenderer()
+          .renderGuiItem(this.advancementEntry.getIcon(), getLeft() + 3, top + 2);
     }
 
     private void renderRewards(PoseStack poseStack, int top, int left, int entryWidth) {
@@ -209,8 +244,8 @@ public class AdvancementOverviewPanel
       RenderSystem.setShaderColor(1, 1, 1, 1);
       RenderSystem.setShaderTexture(0, icons);
       poseStack.pushPose();
-      GuiComponent.blit(poseStack, progressPositionLeft, progressPositionTop, 0, 64, progressWidth,
-          5, 256, 256);
+      GuiComponent.blit(
+          poseStack, progressPositionLeft, progressPositionTop, 0, 64, progressWidth, 5, 256, 256);
       poseStack.popPose();
 
       // Render progress bar and numbers.
@@ -220,8 +255,15 @@ public class AdvancementOverviewPanel
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShaderTexture(0, icons);
         poseStack.pushPose();
-        GuiComponent.blit(poseStack, progressPositionLeft, progressPositionTop, 0, 69,
-            this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone), 5, 256,
+        GuiComponent.blit(
+            poseStack,
+            progressPositionLeft,
+            progressPositionTop,
+            0,
+            69,
+            this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone),
+            5,
+            256,
             256);
         poseStack.popPose();
 
@@ -231,10 +273,13 @@ public class AdvancementOverviewPanel
           float positionScaling = 1.33f;
           poseStack.pushPose();
           poseStack.scale(scaling, scaling, scaling);
-          font.draw(poseStack, advancementEntry.getProgress().getProgressString(),
+          font.draw(
+              poseStack,
+              advancementEntry.getProgress().getProgressString(),
               (progressPositionLeft + progressWidth + 5) * positionScaling,
               (progressPositionTop) * positionScaling,
-              this.remainingCriteriaNumber >= 1 ? ChatFormatting.YELLOW.getColor()
+              this.remainingCriteriaNumber >= 1
+                  ? ChatFormatting.YELLOW.getColor()
                   : ChatFormatting.GREEN.getColor());
           poseStack.popPose();
         }
@@ -250,14 +295,14 @@ public class AdvancementOverviewPanel
       RenderSystem.setShaderColor(1, 1, 1, 1);
       RenderSystem.setShaderTexture(0, miscTexture);
       poseStack.pushPose();
-      GuiComponent.blit(poseStack, leftPosition, topPosition, 0, 0, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      GuiComponent.blit(poseStack, rightPosition, topPosition + 1, 255, 0, 1, entryHeight + 2, 256,
-          entryHeight);
-      GuiComponent.blit(poseStack, leftPosition, bottomPosition, 0, 255, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      GuiComponent.blit(poseStack, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256,
-          entryHeight);
+      GuiComponent.blit(
+          poseStack, leftPosition, topPosition, 0, 0, entryWidth - 1, 1, entryWidth - 1, 256);
+      GuiComponent.blit(
+          poseStack, rightPosition, topPosition + 1, 255, 0, 1, entryHeight + 2, 256, entryHeight);
+      GuiComponent.blit(
+          poseStack, leftPosition, bottomPosition, 0, 255, entryWidth - 1, 1, entryWidth - 1, 256);
+      GuiComponent.blit(
+          poseStack, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256, entryHeight);
       poseStack.popPose();
     }
 
@@ -281,8 +326,17 @@ public class AdvancementOverviewPanel
     }
 
     @Override
-    public void render(PoseStack poseStack, int entryIdx, int top, int left, int entryWidth,
-        int entryHeight, int mouseX, int mouseY, boolean isFocused, float partialTick) {
+    public void render(
+        PoseStack poseStack,
+        int entryIdx,
+        int top,
+        int left,
+        int entryWidth,
+        int entryHeight,
+        int mouseX,
+        int mouseY,
+        boolean isFocused,
+        float partialTick) {
 
       // Positions
       float textPositionLeft = (float) left + iconWidth;
@@ -298,11 +352,15 @@ public class AdvancementOverviewPanel
       this.renderIcon(top);
 
       // Title (only one line)
-      font.drawShadow(poseStack, this.titleParts, textPositionLeft + 3, top + (float) 1,
-          this.titleColor);
+      font.drawShadow(
+          poseStack, this.titleParts, textPositionLeft + 3, top + (float) 1, this.titleColor);
       font.draw(poseStack, titleParts, textPositionLeft + 3, top + (float) 1, this.titleColor);
       if (this.titleWidth != maxFontWidth) {
-        font.draw(poseStack, Constants.ELLIPSIS, textPositionLeft + this.titleWidth, top + 1.0f,
+        font.draw(
+            poseStack,
+            Constants.ELLIPSIS,
+            textPositionLeft + this.titleWidth,
+            top + 1.0f,
             this.titleColor);
       }
 
@@ -310,16 +368,28 @@ public class AdvancementOverviewPanel
       int descriptionLines = 1;
       for (FormattedCharSequence descriptionPart : this.descriptionParts) {
         float descriptionTopPosition = top + (float) (2 + font.lineHeight) * descriptionLines;
-        font.drawShadow(poseStack, descriptionPart, textPositionLeft + 3, descriptionTopPosition,
+        font.drawShadow(
+            poseStack,
+            descriptionPart,
+            textPositionLeft + 3,
+            descriptionTopPosition,
             this.descriptionColor);
-        font.draw(poseStack, descriptionPart, textPositionLeft + 3, descriptionTopPosition,
+        font.draw(
+            poseStack,
+            descriptionPart,
+            textPositionLeft + 3,
+            descriptionTopPosition,
             this.descriptionColor);
         if (this.descriptionParts.size() >= 3 && descriptionLines == 2) {
-          font.draw(poseStack, Constants.ELLIPSIS,
-              textPositionLeft + (font.width(descriptionPart) < maxFontWidth - 6
-                  ? font.width(descriptionPart) + 6
-                  : maxFontWidth - 6),
-              descriptionTopPosition, this.descriptionColor);
+          font.draw(
+              poseStack,
+              Constants.ELLIPSIS,
+              textPositionLeft
+                  + (font.width(descriptionPart) < maxFontWidth - 6
+                      ? font.width(descriptionPart) + 6
+                      : maxFontWidth - 6),
+              descriptionTopPosition,
+              this.descriptionColor);
           break;
         }
         descriptionLines++;
@@ -360,31 +430,4 @@ public class AdvancementOverviewPanel
       return super.mouseClicked(mouseX, mouseY, button);
     }
   }
-
-  @Override
-  public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-    super.render(poseStack, mouseX, mouseY, partialTick);
-
-    // Render tool tips separate to make sure they are fully visible.
-    if (this.advancementTooltip != null) {
-      this.advancementTooltip = null;
-    }
-  }
-
-  @Override
-  public boolean isMouseOver(double mouseX, double mouseY) {
-    return !parent.showingAdvancementDetail() && mouseY >= this.y0 && mouseY <= this.y1
-        && mouseX >= this.x0 && mouseX <= this.x1 + 5;
-  }
-
-  @Override
-  protected int getScrollbarPosition() {
-    return this.listWidth + this.listLeft;
-  }
-
-  @Override
-  public int getRowWidth() {
-    return this.listWidth;
-  }
-
 }
