@@ -19,25 +19,24 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.advancements.Advancement;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.player.AdvancementEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementTree;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
+import net.neoforged.neoforge.event.entity.player.AdvancementEvent.AdvancementEarnEvent;
+import net.neoforged.neoforge.event.entity.player.AdvancementEvent.AdvancementProgressEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
 import de.markusbordihn.advancementstracker.Constants;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
-@EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class AdvancementsEventManager {
 
-  private static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
   private static int numberOfAdvancements = 0;
 
   protected AdvancementsEventManager() {}
@@ -52,47 +51,48 @@ public class AdvancementsEventManager {
   }
 
   @SubscribeEvent
-  public static void handleAdvancementEvent(AdvancementEvent advancementEvent) {
-    Advancement advancement = advancementEvent.getAdvancement();
-    if (ClientAdvancementManager.isValidAdvancement(advancement)) {
-      log.debug("[Advancement Event] {}", advancement);
-      String advancementId = advancement.getId().toString();
-      Advancement rootAdvancement = advancement.getParent();
+  public static void handleAdvancementEarnEvent(AdvancementEarnEvent advancementEvent) {
+    handleAdvancementEvent(advancementEvent);
+  }
+
+  @SubscribeEvent
+  public static void handleAdvancementProgressEvent(AdvancementProgressEvent advancementEvent) {
+    handleAdvancementEvent(advancementEvent);
+  }
+
+
+  private static void handleAdvancementEvent(AdvancementEvent advancementEvent) {
+    //Note: These events are only fired on the logical server
+    AdvancementTree advancementTree = ServerLifecycleHooks.getCurrentServer().getAdvancements().tree();
+
+    AdvancementHolder advancementHolder = advancementEvent.getAdvancement();
+
+    if (ClientAdvancementManager.isValidAdvancement(advancementHolder)) {
+      AdvancementsTracker.log.debug("[Advancement Event] {}", advancementHolder);
+      String advancementId = advancementHolder.id().toString();
+      AdvancementNode rootAdvancement = advancementHolder.value().parent().map(advancementTree::get).orElse(null);
       if (rootAdvancement == null) {
         if (advancementId.contains("/root") || advancementId.contains(":root")) {
           ClientAdvancementManager.reset();
         }
-        AdvancementsManager.addAdvancementRoot(advancement);
+        AdvancementsManager.addAdvancementRoot(advancementHolder);
       } else {
-        while (rootAdvancement != null && rootAdvancement.getParent() != null) {
-          rootAdvancement = rootAdvancement.getParent();
-        }
-        AdvancementsManager.addAdvancementRoot(rootAdvancement);
-        AdvancementsManager.addAdvancementTask(advancement);
+        AdvancementsManager.addAdvancementTask(advancementHolder, rootAdvancement);
       }
 
       // Make sure that we are covering changes which are not catch by the advancements events.
-      Minecraft minecraft = Minecraft.getInstance();
-      if (minecraft != null) {
-        LocalPlayer localPlayer = minecraft.player;
-        if (localPlayer != null && localPlayer.connection != null
-            && localPlayer.connection.getAdvancements() != null && !localPlayer.connection
-                .getAdvancements().getAdvancements().getAllAdvancements().isEmpty()) {
-          int possibleNumberOfAdvancements = localPlayer.connection.getAdvancements()
-              .getAdvancements().getAllAdvancements().size();
-          if (possibleNumberOfAdvancements > numberOfAdvancements) {
-            log.debug("Force sync of advancements because it seems we are missing some {} vs. {}",
-                possibleNumberOfAdvancements, numberOfAdvancements);
-            ClientAdvancementManager.reset();
-            numberOfAdvancements = possibleNumberOfAdvancements;
-          }
-        }
+      int possibleNumberOfAdvancements = advancementTree.nodes().size();
+      if (possibleNumberOfAdvancements > numberOfAdvancements) {
+        AdvancementsTracker.log.debug("Force sync of advancements because it seems we are missing some {} vs. {}",
+              possibleNumberOfAdvancements, numberOfAdvancements);
+        ClientAdvancementManager.reset();
+        numberOfAdvancements = possibleNumberOfAdvancements;
       }
     }
   }
 
   public static void reset() {
-    log.debug("Resetting number of advancements ...");
+    AdvancementsTracker.log.debug("Resetting number of advancements ...");
     numberOfAdvancements = 0;
   }
 

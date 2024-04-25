@@ -19,34 +19,33 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.advancements.AdvancementHolder;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
-import net.minecraft.advancements.Advancement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
 import de.markusbordihn.advancementstracker.config.ClientConfig;
 
-@EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class TrackedAdvancementsManager {
 
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
-  private static Set<AdvancementEntry> trackedAdvancements = new HashSet<>();
+  private static Map<ResourceLocation, AdvancementEntry> trackedAdvancements = new HashMap<>();
   private static List<String> trackedAdvancementsDefault = new ArrayList<>();
   private static List<String> trackedAdvancementsLocal = new ArrayList<>();
   private static List<String> trackedAdvancementsRemote = new ArrayList<>();
@@ -69,26 +68,26 @@ public class TrackedAdvancementsManager {
     } else {
       serverId = null;
     }
-    trackedAdvancements = new HashSet<>();
-    log.info("Preparing tracked advancements ...");
+    trackedAdvancements = new HashMap<>();
+    AdvancementsTracker.log.info("Preparing tracked advancements ...");
 
     // Loading default (over config file) tracked advancements.
     trackedAdvancementsDefault = ClientConfig.CLIENT.trackedAdvancements.get();
     if (!trackedAdvancementsDefault.isEmpty()) {
-      log.info("Loading default (config) tracked advancements: {}", trackedAdvancementsDefault);
+      AdvancementsTracker.log.info("Loading default (config) tracked advancements: {}", trackedAdvancementsDefault);
     }
 
     // Loading local (user) tracked advancements.
     trackedAdvancementsLocal = ClientConfig.CLIENT.trackedAdvancementsLocal.get();
     if (!trackedAdvancementsLocal.isEmpty()) {
-      log.info("Loading local (user) tracked advancements: {}", trackedAdvancementsLocal);
+      AdvancementsTracker.log.info("Loading local (user) tracked advancements: {}", trackedAdvancementsLocal);
     }
 
     // Loading remote tracked advancements, if we are connected to a server.
     if (serverId != null) {
       trackedAdvancementsRemote = ClientConfig.CLIENT.trackedAdvancementsRemote.get();
       if (!trackedAdvancementsRemote.isEmpty()) {
-        log.info("Loading remote ({}) tracked advancements: {} ...", serverId,
+        AdvancementsTracker.log.info("Loading remote ({}) tracked advancements: {} ...", serverId,
             trackedAdvancementsRemote);
       }
     }
@@ -106,7 +105,7 @@ public class TrackedAdvancementsManager {
     if (!trackedAdvancementsDefault.isEmpty()) {
       for (String trackedAdvancementDefault : trackedAdvancementsDefault) {
         if (advancement.getIdString().equals(trackedAdvancementDefault)) {
-          log.debug("Adding default tracked advancement {}", advancement);
+          AdvancementsTracker.log.debug("Adding default tracked advancement {}", advancement);
           trackedAdvancement = advancement;
           break;
         }
@@ -119,7 +118,7 @@ public class TrackedAdvancementsManager {
         if (!cachedAdvancementEntry.isEmpty() && !"".equals(cachedAdvancementEntry)
             && cachedAdvancementEntry.startsWith(serverId)
             && advancement.getIdString().equals(cachedAdvancementEntry.split("::", 2)[1])) {
-          log.debug("Adding remote tracked advancement {}", advancement);
+          AdvancementsTracker.log.debug("Adding remote tracked advancement {}", advancement);
           trackedAdvancement = advancement;
           break;
         }
@@ -130,7 +129,7 @@ public class TrackedAdvancementsManager {
     if (!trackedAdvancementsLocal.isEmpty() && serverId == null) {
       for (String cachedAdvancementEntry : trackedAdvancementsLocal) {
         if (advancement.getIdString().equals(cachedAdvancementEntry)) {
-          log.debug("Adding local tracked advancement {}", advancement);
+          AdvancementsTracker.log.debug("Adding local tracked advancement {}", advancement);
           trackedAdvancement = advancement;
           break;
         }
@@ -147,7 +146,7 @@ public class TrackedAdvancementsManager {
     if (advancement.getProgress().isDone()) {
       return;
     }
-    if (isTrackedAdvancement(advancement)) {
+    if (advancement.isTracked()) {
       untrackAdvancement(advancement);
     } else {
       trackAdvancement(advancement);
@@ -160,17 +159,15 @@ public class TrackedAdvancementsManager {
 
   public static void trackAdvancement(AdvancementEntry advancement, boolean autosave) {
     if (advancement.getProgress().isDone()) {
-      log.warn("Advancement {} is already done, no need to track it.", advancement);
+      AdvancementsTracker.log.warn("Advancement {} is already done, no need to track it.", advancement);
       return;
     }
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      if (trackedAdvancementEntry.getId() == advancement.getId()) {
-        log.warn("Advancement {} is already tracked.", advancement);
-        return;
-      }
+    if (trackedAdvancements.containsKey(advancement.getId())) {
+      AdvancementsTracker.log.warn("Advancement {} is already tracked.", advancement);
+      return;
     }
-    log.info("Track Advancement {}", advancement);
-    trackedAdvancements.add(advancement);
+    AdvancementsTracker.log.info("Track Advancement {}", advancement);
+    trackedAdvancements.put(advancement.getId(), advancement);
     if (autosave) {
       saveTrackedAdvancements();
     }
@@ -195,8 +192,8 @@ public class TrackedAdvancementsManager {
       }
     }
     // Adding entries for current server.
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      trackedAdvancementsToSave.add(serverId + trackedAdvancementEntry.getIdString());
+    for (ResourceLocation trackedAdvancementEntry : trackedAdvancements.keySet()) {
+      trackedAdvancementsToSave.add(serverId + trackedAdvancementEntry);
     }
     ClientConfig.CLIENT.trackedAdvancementsRemote
         .set(trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
@@ -209,8 +206,8 @@ public class TrackedAdvancementsManager {
       return;
     }
     List<String> trackedAdvancementsToSave = new ArrayList<>();
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      trackedAdvancementsToSave.add(trackedAdvancementEntry.getIdString());
+    for (ResourceLocation trackedAdvancementEntry : trackedAdvancements.keySet()) {
+      trackedAdvancementsToSave.add(trackedAdvancementEntry.toString());
     }
     ClientConfig.CLIENT.trackedAdvancementsLocal
         .set(trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
@@ -218,8 +215,8 @@ public class TrackedAdvancementsManager {
     ClientConfig.CLIENT.trackedAdvancements.save();
   }
 
-  public static void untrackAdvancement(Advancement advancement) {
-    untrackAdvancement(advancement.getId());
+  public static void untrackAdvancement(AdvancementHolder advancementHolder) {
+    untrackAdvancement(advancementHolder.id());
   }
 
   public static void untrackAdvancement(AdvancementEntry advancement) {
@@ -227,15 +224,7 @@ public class TrackedAdvancementsManager {
   }
 
   public static void untrackAdvancement(ResourceLocation advancementId) {
-    AdvancementEntry existingAdvancementEntry = null;
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      if (trackedAdvancementEntry.getId() == advancementId) {
-        existingAdvancementEntry = trackedAdvancementEntry;
-        break;
-      }
-    }
-    if (existingAdvancementEntry != null) {
-      trackedAdvancements.remove(existingAdvancementEntry);
+    if (trackedAdvancements.remove(advancementId) != null) {
       saveTrackedAdvancements();
       updateTrackerWidget();
     }
@@ -247,9 +236,8 @@ public class TrackedAdvancementsManager {
 
   public static boolean hasTrackedAdvancement(AdvancementEntry advancementEntry) {
     ResourceLocation rootAdvancementId = advancementEntry.getId();
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      if (trackedAdvancementEntry.rootAdvancement != null
-          && trackedAdvancementEntry.rootAdvancement.getId() == rootAdvancementId) {
+    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements.values()) {
+      if (rootAdvancementId.equals(trackedAdvancementEntry.rootId)) {
         return true;
       }
     }
@@ -260,21 +248,12 @@ public class TrackedAdvancementsManager {
     return !trackedAdvancements.isEmpty();
   }
 
-  public static boolean isTrackedAdvancement(AdvancementEntry advancementEntry) {
-    return isTrackedAdvancement(advancementEntry.getAdvancement());
-  }
-
-  public static boolean isTrackedAdvancement(Advancement advancement) {
-    for (AdvancementEntry trackedAdvancementEntry : trackedAdvancements) {
-      if (trackedAdvancementEntry.getId() == advancement.getId()) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean isTrackedAdvancement(ResourceLocation advancement) {
+    return trackedAdvancements.containsKey(advancement);
   }
 
   public static Set<AdvancementEntry> getTrackedAdvancements() {
-    return trackedAdvancements;
+    return new HashSet<>(trackedAdvancements.values());
   }
 
   private static void updateTrackerWidget() {

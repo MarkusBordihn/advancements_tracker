@@ -21,9 +21,6 @@ package de.markusbordihn.advancementstracker.client.gui.panel;
 
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.ChatFormatting;
@@ -41,11 +38,10 @@ import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry
 import de.markusbordihn.advancementstracker.client.advancements.TrackedAdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.components.AdvancementTooltip;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import org.jetbrains.annotations.NotNull;
 
 public class AdvancementOverviewPanel
     extends ObjectSelectionList<AdvancementOverviewPanel.ChildAdvancementEntry> {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private final int listLeft;
   private final int listWidth;
@@ -55,14 +51,17 @@ public class AdvancementOverviewPanel
 
   public AdvancementOverviewPanel(AdvancementsTrackerScreen parent, int listWidth, int top,
       int listLeft, int bottom) {
-    super(parent.getMinecraftInstance(), listWidth, parent.height, top, bottom,
-        parent.getFontRenderer().lineHeight * 4 + 12);
+    //TODO: Should we base the height off of what bottom would be rather than parent.height?
+    super(parent.getMinecraftInstance(), listWidth, parent.height, top, parent.getFontRenderer().lineHeight * 4 + 12);
     this.parent = parent;
     this.listWidth = listWidth;
     this.listLeft = listLeft;
-    this.setLeftPos(listLeft + 1);
+    this.setX(listLeft + 1);
     this.setRenderBackground(false);
-    this.setRenderSelection(false);
+  }
+
+  @Override
+  protected void renderSelection(@NotNull GuiGraphics graphics, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
   }
 
   public void refreshList() {
@@ -87,8 +86,6 @@ public class AdvancementOverviewPanel
 
   public class ChildAdvancementEntry extends ObjectSelectionList.Entry<ChildAdvancementEntry> {
 
-    private static final ResourceLocation icons =
-        new ResourceLocation("minecraft:textures/gui/icons.png");
     private static final ResourceLocation miscTexture =
         new ResourceLocation(Constants.MOD_ID, "textures/gui/misc.png");
 
@@ -151,7 +148,7 @@ public class AdvancementOverviewPanel
         RenderSystem.setShaderColor(0.5f, 0.5f, 0.5f, 1);
       }
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(this.advancementEntry.getBackground(), getLeft() + 1, top - 1, 0, 0,
+      guiGraphics.blit(this.advancementEntry.getBackground(), getX() + 1, top - 1, 0, 0,
           entryWidth - 2, entryHeight + 1, 16, 16);
       guiGraphics.pose().popPose();
     }
@@ -160,7 +157,7 @@ public class AdvancementOverviewPanel
       if (this.advancementEntry.getIcon() == null) {
         return;
       }
-      guiGraphics.renderItem(this.advancementEntry.getIcon(), getLeft() + 3, top + 2);
+      guiGraphics.renderItem(this.advancementEntry.getIcon(), getX() + 3, top + 2);
     }
 
     private void renderRewards(GuiGraphics guiGraphics, int top, int left, int entryWidth) {
@@ -200,27 +197,23 @@ public class AdvancementOverviewPanel
       }
     }
 
+    protected static final ResourceLocation EXPERIENCE_BAR_BACKGROUND_SPRITE = new ResourceLocation("hud/experience_bar_background");
+    protected static final ResourceLocation EXPERIENCE_BAR_PROGRESS_SPRITE = new ResourceLocation("hud/experience_bar_progress");
+
     private void renderProgress(GuiGraphics guiGraphics, int top, int entryWidth, int iconWidth) {
-      int progressPositionLeft = getLeft() + iconWidth + 5;
+      int progressPositionLeft = getX() + iconWidth + 5;
       int progressPositionTop = top + 33;
 
       // Render empty bar.
-      guiGraphics.pose().pushPose();
-      guiGraphics.blit(icons, progressPositionLeft, progressPositionTop, 0, 64, progressWidth, 5,
-          256, 256);
-      guiGraphics.pose().popPose();
+      guiGraphics.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, progressPositionLeft, progressPositionTop, progressWidth, 5);
 
       // Render progress bar and numbers.
       if (this.remainingCriteriaNumber > 0 || this.isDone) {
         int progressTotal = this.completedCriteriaNumber + this.remainingCriteriaNumber;
         int progressDone = this.completedCriteriaNumber;
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        RenderSystem.setShaderTexture(0, icons);
-        guiGraphics.pose().pushPose();
-        guiGraphics.blit(icons, progressPositionLeft, progressPositionTop, 0, 69,
-            this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone), 5, 256,
-            256);
-        guiGraphics.pose().popPose();
+
+        guiGraphics.blitSprite(EXPERIENCE_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, progressPositionLeft, progressPositionTop, this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone), 5);
 
         // Only render numbers if we have enough space.
         if (entryWidth > progressWidth + 42) {
@@ -241,7 +234,7 @@ public class AdvancementOverviewPanel
     private void renderDecoration(GuiGraphics guiGraphics, int top, int entryWidth,
         int entryHeight) {
       int topPosition = top - 2;
-      int leftPosition = getLeft();
+      int leftPosition = getX();
       int rightPosition = leftPosition + entryWidth - 2;
       int bottomPosition = top + entryHeight;
       guiGraphics.pose().pushPose();
@@ -260,7 +253,7 @@ public class AdvancementOverviewPanel
       int iconPosition = 22;
       if (this.isDone) {
         iconPosition = 3;
-      } else if (TrackedAdvancementsManager.isTrackedAdvancement(this.advancementEntry)) {
+      } else if (this.advancementEntry.isTracked()) {
         iconPosition = 42;
       }
       guiGraphics.pose().pushPose();
@@ -361,8 +354,8 @@ public class AdvancementOverviewPanel
   }
 
   @Override
-  public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-    super.render(guiGraphics, mouseX, mouseY, partialTick);
+  public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
 
     // Render tool tips separate to make sure they are fully visible.
     if (this.advancementTooltip != null) {
@@ -372,8 +365,8 @@ public class AdvancementOverviewPanel
 
   @Override
   public boolean isMouseOver(double mouseX, double mouseY) {
-    return !parent.showingAdvancementDetail() && mouseY >= this.y0 && mouseY <= this.y1
-        && mouseX >= this.x0 && mouseX <= this.x1 + 5;
+    return !parent.showingAdvancementDetail() && mouseY >= getY() && mouseY <= getBottom()
+           && mouseX >= getX() && mouseX <= getRight() + 5;
   }
 
   @Override

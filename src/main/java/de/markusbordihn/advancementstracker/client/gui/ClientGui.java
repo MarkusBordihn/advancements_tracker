@@ -19,30 +19,27 @@
 
 package de.markusbordihn.advancementstracker.client.gui;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
-import net.minecraft.client.Minecraft;
-
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
+import net.neoforged.neoforge.client.event.RegisterGuiOverlaysEvent;
+import net.neoforged.neoforge.client.gui.overlay.VanillaGuiOverlay;
 
+@Mod.EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientGui {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   protected ClientGui() {}
 
-  public static void registerClientGui(final FMLLoadCompleteEvent event) {
-
-    log.info("{} Client Gui and Widget ...", Constants.LOG_REGISTER_PREFIX);
-
-    event.enqueueWork(() -> {
-      Minecraft minecraft = Minecraft.getInstance();
-      MinecraftForge.EVENT_BUS.register(new AdvancementsTrackerWidget(minecraft));
-    });
+  @SubscribeEvent
+  public static void registerOverlays(RegisterGuiOverlaysEvent event) {
+    AdvancementsTracker.log.info("{} Client Gui and Widget ...", Constants.LOG_REGISTER_PREFIX);
+    //Render the widget after the scoreboard widget
+    event.registerAbove(VanillaGuiOverlay.SCOREBOARD.id(), new ResourceLocation(Constants.MOD_ID, "advancement_tracker"), AdvancementsTrackerWidget.INSTANCE);
   }
 }

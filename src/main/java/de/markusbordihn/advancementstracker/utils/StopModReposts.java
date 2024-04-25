@@ -20,39 +20,25 @@
 package de.markusbordihn.advancementstracker.utils;
 
 import java.net.URISyntaxException;
-import java.util.Optional;
 import java.util.regex.Pattern;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.api.IEnvironment;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import de.markusbordihn.advancementstracker.Constants;
+import net.neoforged.fml.loading.FMLEnvironment;
 
 public class StopModReposts {
 
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
   private static final String STOP_MOD_REPOSTS_URL = "https://stopmodreposts.org/";
 
-  private static Optional<String> version =
-      Launcher.INSTANCE.environment().getProperty(IEnvironment.Keys.VERSION.get());
+  private static final String modFileFormatRegEx = Constants.MOD_ID + "_1.20.1-\\d+.\\d+.\\d+.jar";
 
-  private static boolean isDevEnvironment =
-      version.isPresent() && version.get() != null && "MOD_DEV".equals(version.get());
-
-  private static String modFileFormatRegEx = Constants.MOD_ID + "_1.20.1-\\d+.\\d+.\\d+.jar";
-
-  private static Pattern expectedFilePattern = Pattern.compile(modFileFormatRegEx);
+  private static final Pattern expectedFilePattern = Pattern.compile(modFileFormatRegEx);
 
   protected StopModReposts() {}
 
   public static void checkStopModReposts() {
-    if (isDevEnvironment) {
-      log.debug("Detected MDK environment, will skip Stop Mod Reposts checks.");
+    if (!FMLEnvironment.production) {
+      AdvancementsTracker.log.debug("Detected MDK environment, will skip Stop Mod Reposts checks.");
       return;
     }
     String jarFilePath = null;
@@ -60,33 +46,32 @@ public class StopModReposts {
       jarFilePath = AdvancementsTracker.class.getProtectionDomain().getCodeSource().getLocation()
           .toURI().getPath();
     } catch (SecurityException | URISyntaxException | NullPointerException exception) {
-      log.error("Unable to get jar file path: {}", exception);
+      AdvancementsTracker.log.error("Unable to get jar file path", exception);
     }
     if (jarFilePath == null || jarFilePath.isEmpty()) {
-      log.debug("Received empty jar file path!");
+      AdvancementsTracker.log.debug("Received empty jar file path!");
       return;
     }
 
     if (expectedFilePattern.matcher(jarFilePath).find()) {
-      log.info("Thanks for using {} ({}). I hope you enjoy the mod. :)", Constants.MOD_NAME,
-          Constants.MOD_URL);
+      AdvancementsTracker.log.info("Thanks for using {} ({}). I hope you enjoy the mod. :)", Constants.MOD_NAME, Constants.MOD_URL);
     } else {
-      log.error("");
-      log.error("===============================================");
-      log.error("=                                             =");
-      log.error("=   WARNING: File modification detected !!!   =");
-      log.error("=                                             =");
-      log.error("===============================================");
-      log.error("");
-      log.error("It's seems that the mod file {} you are using was modified!", jarFilePath);
-      log.error(
+      AdvancementsTracker.log.error("");
+      AdvancementsTracker.log.error("===============================================");
+      AdvancementsTracker.log.error("=                                             =");
+      AdvancementsTracker.log.error("=   WARNING: File modification detected !!!   =");
+      AdvancementsTracker.log.error("=                                             =");
+      AdvancementsTracker.log.error("===============================================");
+      AdvancementsTracker.log.error("");
+      AdvancementsTracker.log.error("It's seems that the mod file {} you are using was modified!", jarFilePath);
+      AdvancementsTracker.log.error(
           "Please make sure to download the latest {} mod only from the original source at {}",
           Constants.MOD_NAME, Constants.MOD_URL);
-      log.error(
+      AdvancementsTracker.log.error(
           "If you downloaded this mod from other sources we could not make sure that it works as expected or does not includes any unwanted modification (e.g. adware, malware, ...).");
-      log.error("");
-      log.error("See the following page for more details: {}", STOP_MOD_REPOSTS_URL);
-      log.error("");
+      AdvancementsTracker.log.error("");
+      AdvancementsTracker.log.error("See the following page for more details: {}", STOP_MOD_REPOSTS_URL);
+      AdvancementsTracker.log.error("");
     }
 
   }

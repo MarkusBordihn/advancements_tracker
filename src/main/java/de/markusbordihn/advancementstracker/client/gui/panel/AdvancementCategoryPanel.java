@@ -21,9 +21,6 @@ package de.markusbordihn.advancementstracker.client.gui.panel;
 
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.gui.Font;
@@ -39,11 +36,10 @@ import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.TrackedAdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import org.jetbrains.annotations.NotNull;
 
 public class AdvancementCategoryPanel
     extends ObjectSelectionList<AdvancementCategoryPanel.RootAdvancementEntry> {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private final int listLeft;
   private final int listWidth;
@@ -51,15 +47,17 @@ public class AdvancementCategoryPanel
   private AdvancementsTrackerScreen parent;
 
   public AdvancementCategoryPanel(AdvancementsTrackerScreen parent, int listWidth, int top,
-      int listLeft, int bottom) {
-    super(parent.getMinecraftInstance(), listWidth, parent.height, top, bottom,
-        parent.getFontRenderer().lineHeight * 3 + 8);
+      int listLeft, int bottom) {//TODO: Should we base the height off of what bottom would be rather than parent.height?
+    super(parent.getMinecraftInstance(), listWidth, parent.height, top, parent.getFontRenderer().lineHeight * 3 + 8);
     this.parent = parent;
     this.listWidth = listWidth;
     this.listLeft = listLeft;
-    this.setLeftPos(listLeft);
+    this.setX(listLeft);
     this.setRenderBackground(false);
-    this.setRenderSelection(false);
+  }
+
+  @Override
+  protected void renderSelection(@NotNull GuiGraphics graphics, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
   }
 
   public void refreshList() {
@@ -124,7 +122,7 @@ public class AdvancementCategoryPanel
       this.iconWidth = 14;
       this.maxFontWidth = listWidth - iconWidth - 4;
       this.titleWidth =
-          advancementEntry.getTitleWidth() > maxFontWidth ? maxFontWidth - 6 : maxFontWidth;
+          font.width(advancementEntry.getTitle()) > maxFontWidth ? maxFontWidth - 6 : maxFontWidth;
       this.titleParts = Language.getInstance().getVisualOrder(
           FormattedText.composite(font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
       this.descriptionParts = font.split(advancementEntry.getDescription(), maxFontWidth);
@@ -145,7 +143,7 @@ public class AdvancementCategoryPanel
         RenderSystem.setShaderColor(0.4f, 0.4f, 0.4f, 1);
       }
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(this.advancementEntry.getBackground(), getLeft() + 1, top - 1, 0, 0,
+      guiGraphics.blit(this.advancementEntry.getBackground(), getX() + 1, top - 1, 0, 0,
           entryWidth - 2, entryHeight + 2, 16, 16);
       guiGraphics.pose().popPose();
     }
@@ -154,7 +152,7 @@ public class AdvancementCategoryPanel
       if (this.advancementEntry.getIcon() == null) {
         return;
       }
-      guiGraphics.renderItem(this.advancementEntry.getIcon(), getLeft() + 1, top + 6);
+      guiGraphics.renderItem(this.advancementEntry.getIcon(), getX() + 1, top + 6);
     }
 
     private void renderTrackedAdvancementsStatus(GuiGraphics guiGraphics, int top, int left,
@@ -171,7 +169,7 @@ public class AdvancementCategoryPanel
     private void renderDecoration(GuiGraphics guiGraphics, int top, int entryWidth,
         int entryHeight) {
       int topPosition = top - 2;
-      int leftPosition = getLeft();
+      int leftPosition = getX();
       int rightPosition = leftPosition + entryWidth - 2;
       int bottomPosition = top + entryHeight;
       guiGraphics.pose().pushPose();
@@ -267,8 +265,8 @@ public class AdvancementCategoryPanel
 
   @Override
   public boolean isMouseOver(double mouseX, double mouseY) {
-    return !parent.showingAdvancementDetail() && mouseY >= this.y0 && mouseY <= this.y1
-        && mouseX >= this.x0 && mouseX <= this.x1 + 5;
+    return !parent.showingAdvancementDetail() && mouseY >= getY() && mouseY <= getBottom()
+        && mouseX >= getX() && mouseX <= getRight() + 5;
   }
 
   @Override

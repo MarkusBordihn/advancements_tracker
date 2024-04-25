@@ -22,9 +22,6 @@ package de.markusbordihn.advancementstracker.client.gui.screens;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -32,18 +29,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntryProgress;
 import de.markusbordihn.advancementstracker.client.gui.panel.AdvancementInfoPanel;
+import org.jetbrains.annotations.NotNull;
 
-@OnlyIn(Dist.CLIENT)
 public class AdvancementDetailScreen extends Screen {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
 
   private static final ResourceLocation windowBackground =
       new ResourceLocation("textures/gui/advancements/window.png");
@@ -138,9 +130,6 @@ public class AdvancementDetailScreen extends Screen {
     guiGraphics.pose().pushPose();
     guiGraphics.pose().translate(0, 0, 201);
 
-    // Background and frame.
-    this.renderBackground(guiGraphics);
-
     // Render advancement screen.
     super.render(guiGraphics, mouseX, mouseY, partialTick);
 
@@ -152,7 +141,8 @@ public class AdvancementDetailScreen extends Screen {
   }
 
   @Override
-  public void renderBackground(GuiGraphics guiGraphics) {
+  public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
     // Make sure we use a higher z-index.
     guiGraphics.pose().pushPose();

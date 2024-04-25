@@ -25,8 +25,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 public class SmallButton extends Button {
@@ -52,19 +52,15 @@ public class SmallButton extends Button {
 
   @Override
   public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-    RenderSystem.setShader(GameRenderer::getPositionTexShader);
-    RenderSystem.setShaderTexture(0, WIDGETS_LOCATION);
     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
     RenderSystem.enableBlend();
     RenderSystem.defaultBlendFunc();
     RenderSystem.enableDepthTest();
 
     // Scaling down the button images
-    int buttonPosTop = getTextureY() / 2;
-    guiGraphics.blit(WIDGETS_LOCATION, this.getX(), this.getY(), 0, buttonPosTop, this.width / 2,
-        this.height, 256, 128);
-    guiGraphics.blit(WIDGETS_LOCATION, this.getX() + this.width / 2, this.getY(),
-        200 - this.width / 2.0f, buttonPosTop, this.width / 2, this.height, 256, 128);
+    ResourceLocation sprite = SPRITES.get(this.active, this.isHoveredOrFocused());
+    guiGraphics.blitSprite(sprite, this.getX(), this.getY(), this.width / 2, this.height);
+    guiGraphics.blitSprite(sprite, this.getX() + this.width / 2, this.getY(), this.width / 2, this.height);
 
     // Scaling down button text
     guiGraphics.pose().pushPose();
@@ -73,16 +69,6 @@ public class SmallButton extends Button {
         this.scaledX + this.scaledWidth / 2, this.scaledY + (this.scaledHeight - 8) / 2,
         getFGColor() | Mth.ceil(this.alpha * 255.0F) << 24);
     guiGraphics.pose().popPose();
-  }
-
-  private int getTextureY() {
-    int i = 1;
-    if (!this.active) {
-      i = 0;
-    } else if (this.isHoveredOrFocused()) {
-      i = 2;
-    }
-    return 46 + i * 20;
   }
 
 }

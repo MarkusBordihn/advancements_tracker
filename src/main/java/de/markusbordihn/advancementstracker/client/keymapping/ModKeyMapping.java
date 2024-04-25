@@ -19,8 +19,14 @@
 
 package de.markusbordihn.advancementstracker.client.keymapping;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.client.settings.KeyModifier;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -28,25 +34,14 @@ import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.KeyMapping;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
 import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
 import de.markusbordihn.advancementstracker.config.ClientConfig;
 
-@EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class ModKeyMapping {
-
-  protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
-  private static final ClientConfig.Config CLIENT = ClientConfig.CLIENT;
 
   protected ModKeyMapping() {}
 
@@ -60,18 +55,18 @@ public class ModKeyMapping {
 
   @SubscribeEvent
   public static void handleKeyboardKeyPressedEvent(InputEvent.Key event) {
-    if (ModKeyMapping.KEY_SHOW_WIDGET.isDown() && Boolean.TRUE.equals(CLIENT.widgetEnabled.get())) {
-      log.debug("Show/hide Advancements Widget ...");
+    if (ModKeyMapping.KEY_SHOW_WIDGET.isDown() && Boolean.TRUE.equals(ClientConfig.CLIENT.widgetEnabled.get())) {
+      AdvancementsTracker.log.debug("Show/hide Advancements Widget ...");
       AdvancementsTrackerWidget.toggleVisibility();
     } else if (ModKeyMapping.KEY_SHOW_OVERVIEW.isDown()
-        && Boolean.TRUE.equals(CLIENT.overviewEnabled.get())) {
-      log.debug("Show/hide Advancements Overview ...");
+        && Boolean.TRUE.equals(ClientConfig.CLIENT.overviewEnabled.get())) {
+      AdvancementsTracker.log.debug("Show/hide Advancements Overview ...");
       AdvancementsTrackerScreen.toggleVisibility();
     }
   }
 
   public static void registerKeyMapping(RegisterKeyMappingsEvent event) {
-    log.info("{} Key Mapping ...", Constants.LOG_REGISTER_PREFIX);
+    AdvancementsTracker.log.info("{} Key Mapping ...", Constants.LOG_REGISTER_PREFIX);
 
     event.register(ModKeyMapping.KEY_SHOW_WIDGET);
     event.register(ModKeyMapping.KEY_SHOW_OVERVIEW);
