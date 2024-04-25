@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -18,7 +18,6 @@
  */
 
 package de.markusbordihn.advancementstracker;
-
 
 import com.mojang.logging.LogUtils;
 import de.markusbordihn.advancementstracker.client.keymapping.ModKeyMapping;
@@ -41,5 +40,4 @@ public class AdvancementsTracker {
       modEventBus.addListener(ModKeyMapping::registerKeyMapping);
     }
   }
-
 }

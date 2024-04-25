@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,6 +20,7 @@
 package de.markusbordihn.advancementstracker.client.advancements;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
 import net.minecraft.advancements.AdvancementTree;
@@ -30,8 +31,6 @@ import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent.AdvancementEarnEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent.AdvancementProgressEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
-
-import de.markusbordihn.advancementstracker.Constants;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
@@ -60,17 +59,18 @@ public class AdvancementsEventManager {
     handleAdvancementEvent(advancementEvent);
   }
 
-
   private static void handleAdvancementEvent(AdvancementEvent advancementEvent) {
-    //Note: These events are only fired on the logical server
-    AdvancementTree advancementTree = ServerLifecycleHooks.getCurrentServer().getAdvancements().tree();
+    // Note: These events are only fired on the logical server
+    AdvancementTree advancementTree =
+        ServerLifecycleHooks.getCurrentServer().getAdvancements().tree();
 
     AdvancementHolder advancementHolder = advancementEvent.getAdvancement();
 
     if (ClientAdvancementManager.isValidAdvancement(advancementHolder)) {
       AdvancementsTracker.log.debug("[Advancement Event] {}", advancementHolder);
       String advancementId = advancementHolder.id().toString();
-      AdvancementNode rootAdvancement = advancementHolder.value().parent().map(advancementTree::get).orElse(null);
+      AdvancementNode rootAdvancement =
+          advancementHolder.value().parent().map(advancementTree::get).orElse(null);
       if (rootAdvancement == null) {
         if (advancementId.contains("/root") || advancementId.contains(":root")) {
           ClientAdvancementManager.reset();
@@ -83,8 +83,10 @@ public class AdvancementsEventManager {
       // Make sure that we are covering changes which are not catch by the advancements events.
       int possibleNumberOfAdvancements = advancementTree.nodes().size();
       if (possibleNumberOfAdvancements > numberOfAdvancements) {
-        AdvancementsTracker.log.debug("Force sync of advancements because it seems we are missing some {} vs. {}",
-              possibleNumberOfAdvancements, numberOfAdvancements);
+        AdvancementsTracker.log.debug(
+            "Force sync of advancements because it seems we are missing some {} vs. {}",
+            possibleNumberOfAdvancements,
+            numberOfAdvancements);
         ClientAdvancementManager.reset();
         numberOfAdvancements = possibleNumberOfAdvancements;
       }
@@ -95,5 +97,4 @@ public class AdvancementsEventManager {
     AdvancementsTracker.log.debug("Resetting number of advancements ...");
     numberOfAdvancements = 0;
   }
-
 }

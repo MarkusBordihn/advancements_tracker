@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,18 +20,19 @@
 package de.markusbordihn.advancementstracker.client.gui;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
-
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
 import net.neoforged.neoforge.client.event.RegisterGuiOverlaysEvent;
 import net.neoforged.neoforge.client.gui.overlay.VanillaGuiOverlay;
 
-@Mod.EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(
+    modid = Constants.MOD_ID,
+    value = Dist.CLIENT,
+    bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientGui {
 
   protected ClientGui() {}
@@ -39,7 +40,10 @@ public class ClientGui {
   @SubscribeEvent
   public static void registerOverlays(RegisterGuiOverlaysEvent event) {
     AdvancementsTracker.log.info("{} Client Gui and Widget ...", Constants.LOG_REGISTER_PREFIX);
-    //Render the widget after the scoreboard widget
-    event.registerAbove(VanillaGuiOverlay.SCOREBOARD.id(), new ResourceLocation(Constants.MOD_ID, "advancement_tracker"), AdvancementsTrackerWidget.INSTANCE);
+    // Render the widget after the scoreboard widget
+    event.registerAbove(
+        VanillaGuiOverlay.SCOREBOARD.id(),
+        new ResourceLocation(Constants.MOD_ID, "advancement_tracker"),
+        AdvancementsTrackerWidget.INSTANCE);
   }
 }

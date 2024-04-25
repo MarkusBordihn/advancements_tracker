@@ -4,7 +4,8 @@ plugins {
   id 'eclipse'
   id 'idea'
   id 'maven-publish'
-  id 'net.neoforged.gradle.userdev' version '7.0.105'//https://projects.neoforged.net/neoforged/neogradle
+  id 'net.neoforged.gradle.userdev' version '7.0.105'
+//https://projects.neoforged.net/neoforged/neogradle
   //id 'nu.studer.credentials' version '1.0.7'
 }
 
@@ -67,7 +68,7 @@ runs {
   }
   data {
     programArguments('--all', '--output', project.file('src/generated/resources/').getAbsolutePath(),
-            '--mod', 'advancements_tracker', '--existing', project.file('src/main/resources/').getAbsolutePath())
+        '--mod', 'advancements_tracker', '--existing', project.file('src/main/resources/').getAbsolutePath())
   }
 }
 
@@ -79,7 +80,7 @@ repositories {
   maven {
     url "https://www.cursemaven.com"
     content {
-        includeGroup "curse.maven"
+      includeGroup "curse.maven"
     }
   }
 }
@@ -96,26 +97,26 @@ dependencies {
 tasks.named('jar', Jar).configure {
   duplicatesStrategy(DuplicatesStrategy.FAIL)
   manifest.attributes([
-        "Specification-Title": "${mod_name}",
-        "Specification-Vendor": "markusbordihn",
-        "Specification-Version": "1", // We are version 1 of ourselves
-        "Implementation-Title": project.name,
-        "Implementation-Version": project.jar.archiveVersion,
-        "Implementation-Vendor" :"${mod_id}",
-        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-        "Automatic-Module-Name"   : "advancements_tracker"
+      "Specification-Title"     : "${mod_name}",
+      "Specification-Vendor"    : "markusbordihn",
+      "Specification-Version"   : "1", // We are version 1 of ourselves
+      "Implementation-Title"    : project.name,
+      "Implementation-Version"  : project.jar.archiveVersion,
+      "Implementation-Vendor"   : "${mod_id}",
+      "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+      "Automatic-Module-Name"   : "advancements_tracker"
   ])
 }
 
 publishing {
   publications {
     mavenJava(MavenPublication) {
-        artifact jar
+      artifact jar
     }
   }
   repositories {
     maven {
-        url "file:///${project.projectDir}/mcmodsrepo"
+      url "file:///${project.projectDir}/mcmodsrepo"
     }
   }
 }

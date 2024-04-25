@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -36,10 +36,6 @@ public class PositionManager {
   private int defaultHeight = 100;
   private int defaultWidth = 100;
 
-  public enum BasePosition {
-    BOTTOM_LEFT, BOTTOM_RIGHT, MIDDLE_LEFT, MIDDLE_RIGHT, TOP_LEFT, TOP_RIGHT
-  }
-
   public PositionManager() {}
 
   public PositionPoint getTopLeft() {
@@ -55,8 +51,8 @@ public class PositionManager {
   }
 
   public PositionPoint getBottomRight() {
-    return new PositionPoint(this.guiScaledWidth - getWidthOrDefault(),
-        this.guiScaledHeight - getHeightOrDefault());
+    return new PositionPoint(
+        this.guiScaledWidth - getWidthOrDefault(), this.guiScaledHeight - getHeightOrDefault());
   }
 
   public PositionPoint getMiddleLeft() {
@@ -64,18 +60,19 @@ public class PositionManager {
   }
 
   public PositionPoint getMiddleRight() {
-    return new PositionPoint(this.guiScaledWidth - this.width,
-        this.guiScaledHeight / 2 - getHeightOrDefault() / 2);
+    return new PositionPoint(
+        this.guiScaledWidth - this.width, this.guiScaledHeight / 2 - getHeightOrDefault() / 2);
   }
 
   public PositionPoint getHotbarLeft() {
-    return new PositionPoint(this.guiScaledWidth / 2 + HOTBAR_LEFT - getWidthOrDefault(),
+    return new PositionPoint(
+        this.guiScaledWidth / 2 + HOTBAR_LEFT - getWidthOrDefault(),
         this.guiScaledHeight - getHeightOrDefault());
   }
 
   public PositionPoint getHotbarRight() {
-    return new PositionPoint(this.guiScaledWidth / 2 + HOTBAR_RIGHT,
-        this.guiScaledHeight - getHeightOrDefault());
+    return new PositionPoint(
+        this.guiScaledWidth / 2 + HOTBAR_RIGHT, this.guiScaledHeight - getHeightOrDefault());
   }
 
   public void setBasePosition(BasePosition basePosition) {
@@ -99,9 +96,6 @@ public class PositionManager {
         break;
       case MIDDLE_LEFT:
         this.position.setOffset(getMiddleLeft());
-        break;
-      case MIDDLE_RIGHT:
-        this.position.setOffset(getMiddleRight());
         break;
       default:
         this.position.setOffset(getMiddleRight());
@@ -128,28 +122,20 @@ public class PositionManager {
     return position;
   }
 
-  public void setPositionX(int x) {
-    if (x > this.guiScaledWidth - getWidthOrDefault() - SAFE_AREA) {
-      position.setX(this.guiScaledWidth - getWidthOrDefault() - SAFE_AREA);
-    } else {
-      position.setX(x);
-    }
-  }
-
-  public void setPositionY(int y) {
-    if (y > this.guiScaledHeight - getHeightOrDefault() - SAFE_AREA) {
-      position.setY(this.guiScaledHeight - getHeightOrDefault() - SAFE_AREA);
-    } else {
-      position.setY(y);
-    }
-  }
-
   public int getPositionX() {
     return position.getAbsoluteX();
   }
 
+  public void setPositionX(int x) {
+    position.setX(Math.min(x, this.guiScaledWidth - getWidthOrDefault() - SAFE_AREA));
+  }
+
   public int getPositionY() {
     return position.getAbsoluteY();
+  }
+
+  public void setPositionY(int y) {
+    position.setY(Math.min(y, this.guiScaledHeight - getHeightOrDefault() - SAFE_AREA));
   }
 
   public int getPositionXWidth() {
@@ -191,4 +177,12 @@ public class PositionManager {
     return this.height == 0 ? this.defaultHeight : this.height;
   }
 
+  public enum BasePosition {
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT,
+    MIDDLE_LEFT,
+    MIDDLE_RIGHT,
+    TOP_LEFT,
+    TOP_RIGHT
+  }
 }

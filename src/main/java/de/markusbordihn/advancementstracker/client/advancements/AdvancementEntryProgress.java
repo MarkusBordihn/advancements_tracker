@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,14 +19,12 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
+import com.google.common.collect.Lists;
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.collect.Lists;
-
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.CriterionProgress;
@@ -35,14 +33,12 @@ import net.minecraft.resources.ResourceLocation;
 
 public class AdvancementEntryProgress {
 
+  private final int maxCriteraRequired;
   private AdvancementProgress advancementProgress;
-
   private Map<String, CriterionProgress> criteriaMap = new HashMap<>();
-
   // Ids
   private ResourceLocation id;
   private String namespace = "";
-
   // Progress with default values
   private Instant firstProgressDate;
   private Instant lastProgressDate;
@@ -50,15 +46,14 @@ public class AdvancementEntryProgress {
   private String progressString = "";
   private boolean isDone = false;
   private int progressTotal = 0;
-
   // Criteria
   private Iterable<String> completedCriteria;
   private Iterable<String> remainingCriteria;
   private int completedCriteriaNumber;
   private int remainingCriteriaNumber;
-  private final int maxCriteraRequired;
 
-  AdvancementEntryProgress(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
+  AdvancementEntryProgress(
+      AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
     // ID's
     this.id = advancementHolder.id();
     this.namespace = id.getNamespace();
@@ -193,9 +188,10 @@ public class AdvancementEntryProgress {
       for (String possibleNamespace : namespaces) {
 
         // Normalize names for the namespace.
-        String criteriaName = criteria.startsWith(possibleNamespace + ":")
-            ? criteria.replace(possibleNamespace + ":", "")
-            : criteria;
+        String criteriaName =
+            criteria.startsWith(possibleNamespace + ":")
+                ? criteria.replace(possibleNamespace + ":", "")
+                : criteria;
 
         // Check for item in namespace.
         String itemNameFormat = "item." + possibleNamespace + "." + criteriaName;
@@ -241,17 +237,20 @@ public class AdvancementEntryProgress {
       }
 
       String advancementNameFormat =
-          "advancement." + this.id.toString().replace(":", ".").replace("/", ".") + "."
+          "advancement."
+              + this.id.toString().replace(":", ".").replace("/", ".")
+              + "."
               + criteria.replace(":", ".").replace("/", ".");
       Component advancementName = Component.translatable(advancementNameFormat);
       if (!advancementName.getString().equals(advancementNameFormat)) {
         return advancementName.getString();
       }
 
-      AdvancementsTracker.log.warn("Unable to translate {} ({}) to a more meaningful name.", criteria,
+      AdvancementsTracker.log.warn(
+          "Unable to translate {} ({}) to a more meaningful name.",
+          criteria,
           advancementNameFormat);
     }
     return criteria;
   }
-
 }

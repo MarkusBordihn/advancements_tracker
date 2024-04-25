@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,19 +19,18 @@
 
 package de.markusbordihn.advancementstracker.client.gui.components;
 
+import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
-import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
-
 public class AdvancementTooltip {
 
+  private static int tooltipWith = 200;
+  private static int tooltipHeight = 200;
   private final AdvancementEntry advancementEntry;
   private final Font font;
   private final Minecraft minecraft;
-  private static int tooltipWith = 200;
-  private static int tooltipHeight = 200;
 
   public AdvancementTooltip(AdvancementEntry advancementEntry) {
     this.advancementEntry = advancementEntry;
@@ -45,5 +44,4 @@ public class AdvancementTooltip {
     guiGraphics.fill(mouseX, mouseY, mouseX + tooltipWith, mouseY + tooltipHeight, 0x80000000);
     guiGraphics.pose().popPose();
   }
-
 }

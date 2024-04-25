@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,11 +19,10 @@
 
 package de.markusbordihn.advancementstracker.utils;
 
-import java.net.URISyntaxException;
-import java.util.regex.Pattern;
-
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
 import de.markusbordihn.advancementstracker.Constants;
+import java.net.URISyntaxException;
+import java.util.regex.Pattern;
 import net.neoforged.fml.loading.FMLEnvironment;
 
 public class StopModReposts {
@@ -43,8 +42,13 @@ public class StopModReposts {
     }
     String jarFilePath = null;
     try {
-      jarFilePath = AdvancementsTracker.class.getProtectionDomain().getCodeSource().getLocation()
-          .toURI().getPath();
+      jarFilePath =
+          AdvancementsTracker.class
+              .getProtectionDomain()
+              .getCodeSource()
+              .getLocation()
+              .toURI()
+              .getPath();
     } catch (SecurityException | URISyntaxException | NullPointerException exception) {
       AdvancementsTracker.log.error("Unable to get jar file path", exception);
     }
@@ -54,7 +58,10 @@ public class StopModReposts {
     }
 
     if (expectedFilePattern.matcher(jarFilePath).find()) {
-      AdvancementsTracker.log.info("Thanks for using {} ({}). I hope you enjoy the mod. :)", Constants.MOD_NAME, Constants.MOD_URL);
+      AdvancementsTracker.log.info(
+          "Thanks for using {} ({}). I hope you enjoy the mod. :)",
+          Constants.MOD_NAME,
+          Constants.MOD_URL);
     } else {
       AdvancementsTracker.log.error("");
       AdvancementsTracker.log.error("===============================================");
@@ -63,16 +70,18 @@ public class StopModReposts {
       AdvancementsTracker.log.error("=                                             =");
       AdvancementsTracker.log.error("===============================================");
       AdvancementsTracker.log.error("");
-      AdvancementsTracker.log.error("It's seems that the mod file {} you are using was modified!", jarFilePath);
+      AdvancementsTracker.log.error(
+          "It's seems that the mod file {} you are using was modified!", jarFilePath);
       AdvancementsTracker.log.error(
           "Please make sure to download the latest {} mod only from the original source at {}",
-          Constants.MOD_NAME, Constants.MOD_URL);
+          Constants.MOD_NAME,
+          Constants.MOD_URL);
       AdvancementsTracker.log.error(
           "If you downloaded this mod from other sources we could not make sure that it works as expected or does not includes any unwanted modification (e.g. adware, malware, ...).");
       AdvancementsTracker.log.error("");
-      AdvancementsTracker.log.error("See the following page for more details: {}", STOP_MOD_REPOSTS_URL);
+      AdvancementsTracker.log.error(
+          "See the following page for more details: {}", STOP_MOD_REPOSTS_URL);
       AdvancementsTracker.log.error("");
     }
-
   }
 }

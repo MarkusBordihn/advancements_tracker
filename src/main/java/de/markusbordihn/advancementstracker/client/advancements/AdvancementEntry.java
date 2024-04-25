@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,62 +20,58 @@
 package de.markusbordihn.advancementstracker.client.advancements;
 
 import java.util.Comparator;
-
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
-import net.minecraft.advancements.AdvancementType;
-import net.minecraft.util.StringUtil;
-
-import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.AdvancementRewards;
+import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
-  private final Advancement advancement;
-
   final ResourceLocation rootId;
-
+  private final Advancement advancement;
   private final int rootLevel;
 
   // General
   private final ResourceLocation id;
   private final String idString;
-
+  private final String title;
+  // Text Components
+  private final Component descriptionComponent;
+  private final Component titleComponent;
+  // Rewards
+  private final AdvancementRewards rewards;
+  // Progress
+  private final AdvancementEntryProgress advancementProgress;
   // Display Information
   private ItemStack icon;
   private ResourceLocation background;
   private String description;
-  private final String title;
   private AdvancementType frameType;
-
-  // Text Components
-  private final Component descriptionComponent;
-  private final Component titleComponent;
   private int descriptionColor = 0xFFDDDDDD;
   private int titleColor = 0xFFFFFFFF;
-
-  // Rewards
-  private final AdvancementRewards rewards;
   private boolean hasRewards = false;
   private boolean hasRewardsLoaded = false;
-
-  // Progress
-  private final AdvancementEntryProgress advancementProgress;
 
   AdvancementEntry(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
     this(advancementHolder, advancementProgress, null, 0);
   }
 
-  AdvancementEntry(AdvancementHolder advancementHolder, AdvancementProgress advancementProgress, @Nullable AdvancementNode root, int rootLevel) {
+  AdvancementEntry(
+      AdvancementHolder advancementHolder,
+      AdvancementProgress advancementProgress,
+      @Nullable AdvancementNode root,
+      int rootLevel) {
     // Advancements Data
     this.advancement = advancementHolder.value();
     this.id = advancementHolder.id();
@@ -114,7 +110,8 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
     // Use background from root advancement if we don't have any itself.
     if (this.background == null && root != null) {
-      this.background = root.advancement().display().flatMap(DisplayInfo::getBackground).orElse(null);
+      this.background =
+          root.advancement().display().flatMap(DisplayInfo::getBackground).orElse(null);
     }
 
     // Stripped version for ui renderer.
@@ -123,6 +120,27 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
     // Handle Rewards like experience, loot and recipes.
     this.rewards = advancement.rewards();
+  }
+
+  private static String stripControlCodes(String value) {
+    return value == null ? "" : StringUtil.stripColor(value);
+  }
+
+  public static Comparator<AdvancementEntry> sortByTitle() {
+    return Comparator.comparing(entry -> entry.title);
+  }
+
+  public static Comparator<AdvancementEntry> sortByStatus() {
+    return (AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) -> {
+      int result =
+          Boolean.compare(
+              firstAdvancementEntry.getProgress().isDone(),
+              secondAdvancementEntry.getProgress().isDone());
+      if (result == 0) {
+        result = firstAdvancementEntry.title.compareTo(secondAdvancementEntry.title);
+      }
+      return result;
+    };
   }
 
   public boolean isTracked() {
@@ -217,10 +235,6 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
     return !getRewardsRecipes().isEmpty();
   }
 
-  private static String stripControlCodes(String value) {
-    return value == null ? "" : StringUtil.stripColor(value);
-  }
-
   @Override
   public boolean equals(Object object) {
     if (object == this) {
@@ -238,34 +252,25 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   }
 
   @Override
-  public int compare(AdvancementEntry firstAdvancementEntry,
-      AdvancementEntry secondAdvancementEntry) {
+  public int compare(
+      AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) {
     return firstAdvancementEntry.id.compareTo(secondAdvancementEntry.id);
-  }
-
-  public static Comparator<AdvancementEntry> sortByTitle() {
-    return Comparator.comparing(entry -> entry.title);
-  }
-
-  public static Comparator<AdvancementEntry> sortByStatus() {
-    return (AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) -> {
-      int result = Boolean.compare(firstAdvancementEntry.getProgress().isDone(),
-          secondAdvancementEntry.getProgress().isDone());
-      if (result == 0) {
-        result = firstAdvancementEntry.title.compareTo(secondAdvancementEntry.title);
-      }
-      return result;
-    };
   }
 
   @Override
   public String toString() {
     if (this.rootId == null) {
-      return String.format("[Root Advancement] (%s) %s: %s %s", this.frameType, this.id, this.title,
-          this.advancementProgress.getProgress());
+      return String.format(
+          "[Root Advancement] (%s) %s: %s %s",
+          this.frameType, this.id, this.title, this.advancementProgress.getProgress());
     }
-    return String.format("[Advancement %s] (%s) %s => %s: %s %s", this.rootLevel, this.frameType,
-        this.rootId, this.id, this.title, this.advancementProgress.getProgress());
+    return String.format(
+        "[Advancement %s] (%s) %s => %s: %s %s",
+        this.rootLevel,
+        this.frameType,
+        this.rootId,
+        this.id,
+        this.title,
+        this.advancementProgress.getProgress());
   }
-
 }

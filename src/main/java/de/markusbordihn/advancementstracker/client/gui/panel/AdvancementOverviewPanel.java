@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,25 +19,22 @@
 
 package de.markusbordihn.advancementstracker.client.gui.panel;
 
-import java.util.List;
-
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.locale.Language;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.TrackedAdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.components.AdvancementTooltip;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 public class AdvancementOverviewPanel
@@ -49,10 +46,15 @@ public class AdvancementOverviewPanel
   private AdvancementsTrackerScreen parent;
   private AdvancementTooltip advancementTooltip;
 
-  public AdvancementOverviewPanel(AdvancementsTrackerScreen parent, int listWidth, int top,
-      int listLeft, int bottom) {
-    //TODO: Should we base the height off of what bottom would be rather than parent.height?
-    super(parent.getMinecraftInstance(), listWidth, parent.height, top, parent.getFontRenderer().lineHeight * 4 + 12);
+  public AdvancementOverviewPanel(
+      AdvancementsTrackerScreen parent, int listWidth, int top, int listLeft, int bottom) {
+    // TODO: Should we base the height off of what bottom would be rather than parent.height?
+    super(
+        parent.getMinecraftInstance(),
+        listWidth,
+        parent.height,
+        top,
+        parent.getFontRenderer().lineHeight * 4 + 12);
     this.parent = parent;
     this.listWidth = listWidth;
     this.listLeft = listLeft;
@@ -61,15 +63,20 @@ public class AdvancementOverviewPanel
   }
 
   @Override
-  protected void renderSelection(@NotNull GuiGraphics graphics, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-  }
+  protected void renderSelection(
+      @NotNull GuiGraphics graphics,
+      int y,
+      int entryWidth,
+      int entryHeight,
+      int borderColor,
+      int fillColor) {}
 
   public void refreshList() {
     this.clearEntries();
 
     // Build child advancements list.
-    parent.buildChildAdvancementsList(this::addEntry,
-        mod -> new ChildAdvancementEntry(mod, this.parent));
+    parent.buildChildAdvancementsList(
+        this::addEntry, mod -> new ChildAdvancementEntry(mod, this.parent));
 
     // Reset scroll bar
     if (getScrollAmount() > 0) {
@@ -84,11 +91,43 @@ public class AdvancementOverviewPanel
     this.advancementTooltip = advancementTooltip;
   }
 
+  @Override
+  public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+
+    // Render tool tips separate to make sure they are fully visible.
+    if (this.advancementTooltip != null) {
+      this.advancementTooltip = null;
+    }
+  }
+
+  @Override
+  public boolean isMouseOver(double mouseX, double mouseY) {
+    return !parent.showingAdvancementDetail()
+        && mouseY >= getY()
+        && mouseY <= getBottom()
+        && mouseX >= getX()
+        && mouseX <= getRight() + 5;
+  }
+
+  @Override
+  protected int getScrollbarPosition() {
+    return this.listWidth + this.listLeft;
+  }
+
+  @Override
+  public int getRowWidth() {
+    return this.listWidth;
+  }
+
   public class ChildAdvancementEntry extends ObjectSelectionList.Entry<ChildAdvancementEntry> {
 
+    protected static final ResourceLocation EXPERIENCE_BAR_BACKGROUND_SPRITE =
+        new ResourceLocation("hud/experience_bar_background");
+    protected static final ResourceLocation EXPERIENCE_BAR_PROGRESS_SPRITE =
+        new ResourceLocation("hud/experience_bar_progress");
     private static final ResourceLocation miscTexture =
         new ResourceLocation(Constants.MOD_ID, "textures/gui/misc.png");
-
     private final AdvancementEntry advancementEntry;
     private final AdvancementsTrackerScreen parent;
     private final AdvancementTooltip advancementTooltip;
@@ -99,11 +138,9 @@ public class AdvancementOverviewPanel
     private final int iconWidth;
     private final int remainingCriteriaNumber;
     private final int titleColor;
-
     private FormattedCharSequence titleParts;
     private List<FormattedCharSequence> descriptionParts;
     private boolean isMouseOvered = false;
-
     // Cached positions and sizes
     private int maxFontWidth;
     private int progressWidth = 182;
@@ -126,10 +163,14 @@ public class AdvancementOverviewPanel
       this.iconWidth = 18;
       this.maxFontWidth = listWidth - this.iconWidth - 4;
       this.titleWidth =
-          font.width(advancementEntry.getTitle()) > this.maxFontWidth ? this.maxFontWidth - 6
+          font.width(advancementEntry.getTitle()) > this.maxFontWidth
+              ? this.maxFontWidth - 6
               : this.maxFontWidth;
-      this.titleParts = Language.getInstance().getVisualOrder(
-          FormattedText.composite(font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
+      this.titleParts =
+          Language.getInstance()
+              .getVisualOrder(
+                  FormattedText.composite(
+                      font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
       this.descriptionParts = font.split(advancementEntry.getDescription(), this.maxFontWidth);
     }
 
@@ -137,8 +178,8 @@ public class AdvancementOverviewPanel
       return advancementEntry;
     }
 
-    private void renderBackground(GuiGraphics guiGraphics, int top, int entryWidth,
-        int entryHeight) {
+    private void renderBackground(
+        GuiGraphics guiGraphics, int top, int entryWidth, int entryHeight) {
       if (this.advancementEntry.getBackground() == null) {
         return;
       }
@@ -148,8 +189,16 @@ public class AdvancementOverviewPanel
         RenderSystem.setShaderColor(0.5f, 0.5f, 0.5f, 1);
       }
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(this.advancementEntry.getBackground(), getX() + 1, top - 1, 0, 0,
-          entryWidth - 2, entryHeight + 1, 16, 16);
+      guiGraphics.blit(
+          this.advancementEntry.getBackground(),
+          getX() + 1,
+          top - 1,
+          0,
+          0,
+          entryWidth - 2,
+          entryHeight + 1,
+          16,
+          16);
       guiGraphics.pose().popPose();
     }
 
@@ -197,15 +246,17 @@ public class AdvancementOverviewPanel
       }
     }
 
-    protected static final ResourceLocation EXPERIENCE_BAR_BACKGROUND_SPRITE = new ResourceLocation("hud/experience_bar_background");
-    protected static final ResourceLocation EXPERIENCE_BAR_PROGRESS_SPRITE = new ResourceLocation("hud/experience_bar_progress");
-
     private void renderProgress(GuiGraphics guiGraphics, int top, int entryWidth, int iconWidth) {
       int progressPositionLeft = getX() + iconWidth + 5;
       int progressPositionTop = top + 33;
 
       // Render empty bar.
-      guiGraphics.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, progressPositionLeft, progressPositionTop, progressWidth, 5);
+      guiGraphics.blitSprite(
+          EXPERIENCE_BAR_BACKGROUND_SPRITE,
+          progressPositionLeft,
+          progressPositionTop,
+          progressWidth,
+          5);
 
       // Render progress bar and numbers.
       if (this.remainingCriteriaNumber > 0 || this.isDone) {
@@ -213,7 +264,16 @@ public class AdvancementOverviewPanel
         int progressDone = this.completedCriteriaNumber;
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
-        guiGraphics.blitSprite(EXPERIENCE_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, progressPositionLeft, progressPositionTop, this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone), 5);
+        guiGraphics.blitSprite(
+            EXPERIENCE_BAR_PROGRESS_SPRITE,
+            182,
+            5,
+            0,
+            0,
+            progressPositionLeft,
+            progressPositionTop,
+            this.isDone ? progressWidth : (progressWidth / progressTotal * progressDone),
+            5);
 
         // Only render numbers if we have enough space.
         if (entryWidth > progressWidth + 42) {
@@ -221,31 +281,50 @@ public class AdvancementOverviewPanel
           float positionScaling = 1.33f;
           guiGraphics.pose().pushPose();
           guiGraphics.pose().scale(scaling, scaling, scaling);
-          guiGraphics.drawString(this.font, advancementEntry.getProgress().getProgressString(),
+          guiGraphics.drawString(
+              this.font,
+              advancementEntry.getProgress().getProgressString(),
               Math.round((progressPositionLeft + progressWidth + 5) * positionScaling),
               Math.round((progressPositionTop) * positionScaling),
-              this.remainingCriteriaNumber >= 1 ? ChatFormatting.YELLOW.getColor()
+              this.remainingCriteriaNumber >= 1
+                  ? ChatFormatting.YELLOW.getColor()
                   : ChatFormatting.GREEN.getColor());
           guiGraphics.pose().popPose();
         }
       }
     }
 
-    private void renderDecoration(GuiGraphics guiGraphics, int top, int entryWidth,
-        int entryHeight) {
+    private void renderDecoration(
+        GuiGraphics guiGraphics, int top, int entryWidth, int entryHeight) {
       int topPosition = top - 2;
       int leftPosition = getX();
       int rightPosition = leftPosition + entryWidth - 2;
       int bottomPosition = top + entryHeight;
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(miscTexture, leftPosition, topPosition, 0, 0, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      guiGraphics.blit(miscTexture, rightPosition, topPosition + 1, 255, 0, 1, entryHeight + 2, 256,
+      guiGraphics.blit(
+          miscTexture, leftPosition, topPosition, 0, 0, entryWidth - 1, 1, entryWidth - 1, 256);
+      guiGraphics.blit(
+          miscTexture,
+          rightPosition,
+          topPosition + 1,
+          255,
+          0,
+          1,
+          entryHeight + 2,
+          256,
           entryHeight);
-      guiGraphics.blit(miscTexture, leftPosition, bottomPosition, 0, 255, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      guiGraphics.blit(miscTexture, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256,
-          entryHeight);
+      guiGraphics.blit(
+          miscTexture,
+          leftPosition,
+          bottomPosition,
+          0,
+          255,
+          entryWidth - 1,
+          1,
+          entryWidth - 1,
+          256);
+      guiGraphics.blit(
+          miscTexture, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256, entryHeight);
       guiGraphics.pose().popPose();
     }
 
@@ -267,8 +346,17 @@ public class AdvancementOverviewPanel
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int entryIdx, int top, int left, int entryWidth,
-        int entryHeight, int mouseX, int mouseY, boolean isFocused, float partialTick) {
+    public void render(
+        GuiGraphics guiGraphics,
+        int entryIdx,
+        int top,
+        int left,
+        int entryWidth,
+        int entryHeight,
+        int mouseX,
+        int mouseY,
+        boolean isFocused,
+        float partialTick) {
 
       // Mouse over state
       this.isMouseOvered = this.isMouseOver(mouseX, mouseY);
@@ -296,22 +384,36 @@ public class AdvancementOverviewPanel
       // Title (only one line)
       guiGraphics.drawString(this.font, titleParts, textPositionLeft + 3, top + 1, this.titleColor);
       if (this.titleWidth != maxFontWidth) {
-        guiGraphics.drawString(this.font, Constants.ELLIPSIS, textPositionLeft + this.titleWidth,
-            top + 1, this.titleColor, false);
+        guiGraphics.drawString(
+            this.font,
+            Constants.ELLIPSIS,
+            textPositionLeft + this.titleWidth,
+            top + 1,
+            this.titleColor,
+            false);
       }
 
       // Description (max. two lines)
       int descriptionLines = 1;
       for (FormattedCharSequence descriptionPart : this.descriptionParts) {
         int descriptionTopPosition = top + (2 + font.lineHeight) * descriptionLines;
-        guiGraphics.drawString(this.font, descriptionPart, textPositionLeft + 3,
-            descriptionTopPosition, this.descriptionColor);
+        guiGraphics.drawString(
+            this.font,
+            descriptionPart,
+            textPositionLeft + 3,
+            descriptionTopPosition,
+            this.descriptionColor);
         if (this.descriptionParts.size() >= 3 && descriptionLines == 2) {
-          guiGraphics.drawString(this.font, Constants.ELLIPSIS,
-              textPositionLeft + (font.width(descriptionPart) < maxFontWidth - 6
-                  ? font.width(descriptionPart) + 6
-                  : maxFontWidth - 6),
-              descriptionTopPosition, this.descriptionColor, false);
+          guiGraphics.drawString(
+              this.font,
+              Constants.ELLIPSIS,
+              textPositionLeft
+                  + (font.width(descriptionPart) < maxFontWidth - 6
+                      ? font.width(descriptionPart) + 6
+                      : maxFontWidth - 6),
+              descriptionTopPosition,
+              this.descriptionColor,
+              false);
           break;
         }
         descriptionLines++;
@@ -352,31 +454,4 @@ public class AdvancementOverviewPanel
       return super.mouseClicked(mouseX, mouseY, button);
     }
   }
-
-  @Override
-  public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-    super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
-
-    // Render tool tips separate to make sure they are fully visible.
-    if (this.advancementTooltip != null) {
-      this.advancementTooltip = null;
-    }
-  }
-
-  @Override
-  public boolean isMouseOver(double mouseX, double mouseY) {
-    return !parent.showingAdvancementDetail() && mouseY >= getY() && mouseY <= getBottom()
-           && mouseX >= getX() && mouseX <= getRight() + 5;
-  }
-
-  @Override
-  protected int getScrollbarPosition() {
-    return this.listWidth + this.listLeft;
-  }
-
-  @Override
-  public int getRowWidth() {
-    return this.listWidth;
-  }
-
 }

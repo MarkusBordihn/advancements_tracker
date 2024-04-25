@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,6 +20,7 @@
 package de.markusbordihn.advancementstracker.client.advancements;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,19 +29,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.LevelEvent;
-
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.resources.ResourceLocation;
-
-import de.markusbordihn.advancementstracker.Constants;
 import org.jetbrains.annotations.Nullable;
 
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
@@ -82,13 +79,15 @@ public class AdvancementsManager {
       return;
     }
     AdvancementProgress advancementProgress = getAdvancementProgress(advancementHolder.value());
-    AdvancementEntry advancementEntry = new AdvancementEntry(advancementHolder, advancementProgress);
+    AdvancementEntry advancementEntry =
+        new AdvancementEntry(advancementHolder, advancementProgress);
     rootAdvancements.put(advancementId, advancementEntry);
     advancementsIndex.add(advancementId);
     AdvancementsTracker.log.debug("Added Root Advancement: {}", advancementEntry);
   }
 
-  public static void addAdvancementTask(AdvancementHolder advancementHolder, @Nullable AdvancementNode parent) {
+  public static void addAdvancementTask(
+      AdvancementHolder advancementHolder, @Nullable AdvancementNode parent) {
     ResourceLocation advancementId = advancementHolder.id();
     int rootLevel = 0;
     // Try to add root advancement, if this is a child advancement.
@@ -107,9 +106,11 @@ public class AdvancementsManager {
 
     // Get advancements stats and store the advancement data.
     AdvancementProgress advancementProgress = getAdvancementProgress(advancementHolder.value());
-    AdvancementEntry advancementEntry = new AdvancementEntry(advancementHolder, advancementProgress, parent, rootLevel);
-    advancementsMap.computeIfAbsent(advancementEntry.rootId, k -> new HashSet<>())
-          .add(advancementEntry);
+    AdvancementEntry advancementEntry =
+        new AdvancementEntry(advancementHolder, advancementProgress, parent, rootLevel);
+    advancementsMap
+        .computeIfAbsent(advancementEntry.rootId, k -> new HashSet<>())
+        .add(advancementEntry);
     advancementsIndex.add(advancementId);
     if (!hasAdvancements) {
       hasAdvancements = true;
@@ -138,8 +139,10 @@ public class AdvancementsManager {
     return new HashSet<>(rootAdvancements.values());
   }
 
-  public static Set<AdvancementEntry> getSortedRootAdvancements(Comparator<AdvancementEntry> comparator) {
-    return rootAdvancements.values().stream().sorted(comparator)
+  public static Set<AdvancementEntry> getSortedRootAdvancements(
+      Comparator<AdvancementEntry> comparator) {
+    return rootAdvancements.values().stream()
+        .sorted(comparator)
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
@@ -184,7 +187,8 @@ public class AdvancementsManager {
 
   public static Set<AdvancementEntry> getAdvancements(AdvancementEntry rootAdvancement) {
     if (rootAdvancement == null) {
-      AdvancementsTracker.log.error("Unable to get advancements for root advancement {}", rootAdvancement);
+      AdvancementsTracker.log.error(
+          "Unable to get advancements for root advancement {}", rootAdvancement);
       return new HashSet<>();
     }
     Set<AdvancementEntry> advancements = advancementsMap.get(rootAdvancement.getId());
@@ -194,11 +198,13 @@ public class AdvancementsManager {
     return advancements;
   }
 
-  public static Set<AdvancementEntry> getSortedAdvancements(AdvancementEntry rootAdvancement,
-      Comparator<AdvancementEntry> comparator) {
+  public static Set<AdvancementEntry> getSortedAdvancements(
+      AdvancementEntry rootAdvancement, Comparator<AdvancementEntry> comparator) {
     Set<AdvancementEntry> advancements = getAdvancements(rootAdvancement);
-    return advancements.isEmpty() ? advancements
-        : advancements.stream().sorted(comparator)
+    return advancements.isEmpty()
+        ? advancements
+        : advancements.stream()
+            .sorted(comparator)
             .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
@@ -210,14 +216,17 @@ public class AdvancementsManager {
     return getSortedAdvancements(rootAdvancement, AdvancementEntry.sortByStatus());
   }
 
-  public static void updateAdvancementProgress(AdvancementHolder advancementHolder,
-      AdvancementProgress advancementProgress) {
+  public static void updateAdvancementProgress(
+      AdvancementHolder advancementHolder, AdvancementProgress advancementProgress) {
     advancementProgressMap.put(advancementHolder.value(), advancementProgress);
     AdvancementEntry advancementEntry = getAdvancement(advancementHolder);
     if (advancementEntry == null) {
       advancementEntry = getRootAdvancement(advancementHolder);
       if (advancementEntry == null) {
-        AdvancementsTracker.log.error("Unable to find entry for advancement {} with progress {}", advancementHolder.id(), advancementProgress);
+        AdvancementsTracker.log.error(
+            "Unable to find entry for advancement {} with progress {}",
+            advancementHolder.id(),
+            advancementProgress);
         return;
       }
     }
@@ -250,8 +259,9 @@ public class AdvancementsManager {
 
   public static AdvancementEntry getSelectedRootAdvancement() {
     if (selectedRootAdvancement == null && rootAdvancements != null) {
-      //Just use a find any as it is an unsorted map
-      Optional<AdvancementEntry> possibleRootAdvancement = rootAdvancements.values().stream().findAny();
+      // Just use a find any as it is an unsorted map
+      Optional<AdvancementEntry> possibleRootAdvancement =
+          rootAdvancements.values().stream().findAny();
       if (possibleRootAdvancement.isPresent()) {
         AdvancementsTracker.log.debug("Select root advancement: {}", selectedAdvancement);
         selectedRootAdvancement = possibleRootAdvancement.get();
@@ -271,5 +281,4 @@ public class AdvancementsManager {
   public static boolean hasAdvancements() {
     return hasAdvancements;
   }
-
 }

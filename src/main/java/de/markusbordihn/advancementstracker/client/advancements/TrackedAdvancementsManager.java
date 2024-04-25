@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,6 +20,9 @@
 package de.markusbordihn.advancementstracker.client.advancements;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
+import de.markusbordihn.advancementstracker.config.ClientConfig;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,20 +30,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.LevelEvent;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.resources.ResourceLocation;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
-import de.markusbordihn.advancementstracker.config.ClientConfig;
 
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class TrackedAdvancementsManager {
@@ -74,20 +71,24 @@ public class TrackedAdvancementsManager {
     // Loading default (over config file) tracked advancements.
     trackedAdvancementsDefault = ClientConfig.CLIENT.trackedAdvancements.get();
     if (!trackedAdvancementsDefault.isEmpty()) {
-      AdvancementsTracker.log.info("Loading default (config) tracked advancements: {}", trackedAdvancementsDefault);
+      AdvancementsTracker.log.info(
+          "Loading default (config) tracked advancements: {}", trackedAdvancementsDefault);
     }
 
     // Loading local (user) tracked advancements.
     trackedAdvancementsLocal = ClientConfig.CLIENT.trackedAdvancementsLocal.get();
     if (!trackedAdvancementsLocal.isEmpty()) {
-      AdvancementsTracker.log.info("Loading local (user) tracked advancements: {}", trackedAdvancementsLocal);
+      AdvancementsTracker.log.info(
+          "Loading local (user) tracked advancements: {}", trackedAdvancementsLocal);
     }
 
     // Loading remote tracked advancements, if we are connected to a server.
     if (serverId != null) {
       trackedAdvancementsRemote = ClientConfig.CLIENT.trackedAdvancementsRemote.get();
       if (!trackedAdvancementsRemote.isEmpty()) {
-        AdvancementsTracker.log.info("Loading remote ({}) tracked advancements: {} ...", serverId,
+        AdvancementsTracker.log.info(
+            "Loading remote ({}) tracked advancements: {} ...",
+            serverId,
             trackedAdvancementsRemote);
       }
     }
@@ -115,7 +116,7 @@ public class TrackedAdvancementsManager {
     // Check for remote tracked advancement
     if (!trackedAdvancementsRemote.isEmpty() && serverId != null) {
       for (String cachedAdvancementEntry : trackedAdvancementsRemote) {
-        if (!cachedAdvancementEntry.isEmpty() && !"".equals(cachedAdvancementEntry)
+        if (!cachedAdvancementEntry.isEmpty()
             && cachedAdvancementEntry.startsWith(serverId)
             && advancement.getIdString().equals(cachedAdvancementEntry.split("::", 2)[1])) {
           AdvancementsTracker.log.debug("Adding remote tracked advancement {}", advancement);
@@ -139,7 +140,6 @@ public class TrackedAdvancementsManager {
     if (trackedAdvancement != null) {
       trackAdvancement(trackedAdvancement, false);
     }
-
   }
 
   public static void toggleTrackedAdvancement(AdvancementEntry advancement) {
@@ -159,7 +159,8 @@ public class TrackedAdvancementsManager {
 
   public static void trackAdvancement(AdvancementEntry advancement, boolean autosave) {
     if (advancement.getProgress().isDone()) {
-      AdvancementsTracker.log.warn("Advancement {} is already done, no need to track it.", advancement);
+      AdvancementsTracker.log.warn(
+          "Advancement {} is already done, no need to track it.", advancement);
       return;
     }
     if (trackedAdvancements.containsKey(advancement.getId())) {
@@ -186,8 +187,7 @@ public class TrackedAdvancementsManager {
     List<String> trackedAdvancementsToSave = new ArrayList<>();
     // Adding existing entries, but ignore entries for current server.
     for (String trackedAdvancementRemote : trackedAdvancementsRemote) {
-      if (!trackedAdvancementRemote.isEmpty() && !"".equals(trackedAdvancementRemote)
-          && !trackedAdvancementRemote.startsWith(serverId)) {
+      if (!trackedAdvancementRemote.isEmpty() && !trackedAdvancementRemote.startsWith(serverId)) {
         trackedAdvancementsToSave.add(trackedAdvancementRemote);
       }
     }
@@ -195,8 +195,8 @@ public class TrackedAdvancementsManager {
     for (ResourceLocation trackedAdvancementEntry : trackedAdvancements.keySet()) {
       trackedAdvancementsToSave.add(serverId + trackedAdvancementEntry);
     }
-    ClientConfig.CLIENT.trackedAdvancementsRemote
-        .set(trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
+    ClientConfig.CLIENT.trackedAdvancementsRemote.set(
+        trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
     trackedAdvancementsRemote = ClientConfig.CLIENT.trackedAdvancementsRemote.get();
     ClientConfig.CLIENT.trackedAdvancements.save();
   }
@@ -209,8 +209,8 @@ public class TrackedAdvancementsManager {
     for (ResourceLocation trackedAdvancementEntry : trackedAdvancements.keySet()) {
       trackedAdvancementsToSave.add(trackedAdvancementEntry.toString());
     }
-    ClientConfig.CLIENT.trackedAdvancementsLocal
-        .set(trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
+    ClientConfig.CLIENT.trackedAdvancementsLocal.set(
+        trackedAdvancementsToSave.stream().distinct().collect(Collectors.toList()));
     trackedAdvancementsLocal = ClientConfig.CLIENT.trackedAdvancementsLocal.get();
     ClientConfig.CLIENT.trackedAdvancements.save();
   }
@@ -259,5 +259,4 @@ public class TrackedAdvancementsManager {
   private static void updateTrackerWidget() {
     AdvancementsTrackerWidget.updateTrackedAdvancements();
   }
-
 }

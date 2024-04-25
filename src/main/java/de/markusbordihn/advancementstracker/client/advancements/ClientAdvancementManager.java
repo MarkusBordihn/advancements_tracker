@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,22 +20,19 @@
 package de.markusbordihn.advancementstracker.client.advancements;
 
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod.EventBusSubscriber;
 import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
-
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
-import net.minecraft.client.multiplayer.ClientAdvancements;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
 
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class ClientAdvancementManager implements ClientAdvancements.Listener {
@@ -74,18 +71,17 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
     // Other advancements screen will remove the event listener, for this reason we need to check
     // if we need to reload the advancements after such advancements screen was open.
     Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft != null) {
-      if (minecraft.screen != null) {
-        Screen screen = minecraft.screen;
-        if (!needsReload && !(screen instanceof AdvancementsTrackerScreen)
-            && (screen instanceof AdvancementsScreen
-                || screen instanceof ClientAdvancements.Listener)) {
-          AdvancementsTracker.log.debug("Need to reload advancements after screen {} is closed!", minecraft.screen);
-          needsReload = true;
-        }
-      } else if (needsReload) {
-        reset();
+    if (minecraft.screen != null) {
+      Screen screen = minecraft.screen;
+      if (!needsReload
+          && !(screen instanceof AdvancementsTrackerScreen)
+          && (screen instanceof ClientAdvancements.Listener)) {
+        AdvancementsTracker.log.debug(
+            "Need to reload advancements after screen {} is closed!", minecraft.screen);
+        needsReload = true;
       }
+    } else if (needsReload) {
+      reset();
     }
   }
 
@@ -103,9 +99,11 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
       return;
     }
     Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null || minecraft.player == null || minecraft.player.connection == null
-        || minecraft.player.connection.getAdvancements() == null || minecraft.player.connection
-            .getAdvancements().getTree().nodes().isEmpty()) {
+    if (minecraft == null
+        || minecraft.player == null
+        || minecraft.player.connection == null
+        || minecraft.player.connection.getAdvancements() == null
+        || minecraft.player.connection.getAdvancements().getTree().nodes().isEmpty()) {
       return;
     }
     AdvancementsTracker.log.debug("Adding client advancement manager listener...");
@@ -120,18 +118,20 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
         || advancementId.startsWith("smallships:recipes")) {
       return false;
     } else if (advancementHolder.value().display().isEmpty()) {
-      AdvancementsTracker.log.debug("[Skip Advancement with no display information] {}", advancementId);
+      AdvancementsTracker.log.debug(
+          "[Skip Advancement with no display information] {}", advancementId);
       return false;
     }
     return true;
   }
 
   @Override
-  public void onUpdateAdvancementProgress(AdvancementNode advancementNode,
-      AdvancementProgress advancementProgress) {
+  public void onUpdateAdvancementProgress(
+      AdvancementNode advancementNode, AdvancementProgress advancementProgress) {
     AdvancementHolder advancementHolder = advancementNode.holder();
     if (isValidAdvancement(advancementHolder)) {
-      AdvancementsTracker.log.debug("[Update Advancement Progress] {} with {}", advancementHolder.id(), advancementProgress);
+      AdvancementsTracker.log.debug(
+          "[Update Advancement Progress] {} with {}", advancementHolder.id(), advancementProgress);
       AdvancementsManager.updateAdvancementProgress(advancementHolder, advancementProgress);
     }
   }
@@ -174,7 +174,7 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
   @Override
   public void onSelectedTabChanged(AdvancementHolder advancementHolder) {
     // Not used.
-    AdvancementsTracker.log.debug("[Selected Tab Changed] {}", advancementHolder == null ? null : advancementHolder.id());
+    AdvancementsTracker.log.debug(
+        "[Selected Tab Changed] {}", advancementHolder == null ? null : advancementHolder.id());
   }
-
 }

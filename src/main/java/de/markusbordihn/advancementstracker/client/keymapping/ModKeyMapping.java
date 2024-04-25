@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,7 +19,13 @@
 
 package de.markusbordihn.advancementstracker.client.keymapping;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import de.markusbordihn.advancementstracker.AdvancementsTracker;
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
+import de.markusbordihn.advancementstracker.config.ClientConfig;
+import net.minecraft.client.KeyMapping;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod.EventBusSubscriber;
@@ -27,35 +33,32 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
-
 import org.lwjgl.glfw.GLFW;
-
-import com.mojang.blaze3d.platform.InputConstants;
-
-import net.minecraft.client.KeyMapping;
-
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
-import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
-import de.markusbordihn.advancementstracker.config.ClientConfig;
 
 @EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
 public class ModKeyMapping {
 
+  public static final KeyMapping KEY_SHOW_WIDGET =
+      new KeyMapping(
+          Constants.KEY_PREFIX + "show_widget",
+          KeyConflictContext.IN_GAME,
+          KeyModifier.ALT,
+          InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L),
+          Constants.KEY_PREFIX + "category");
+  public static final KeyMapping KEY_SHOW_OVERVIEW =
+      new KeyMapping(
+          Constants.KEY_PREFIX + "show_overview",
+          KeyConflictContext.IN_GAME,
+          KeyModifier.CONTROL,
+          InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L),
+          Constants.KEY_PREFIX + "category");
+
   protected ModKeyMapping() {}
-
-  public static final KeyMapping KEY_SHOW_WIDGET = new KeyMapping(
-      Constants.KEY_PREFIX + "show_widget", KeyConflictContext.IN_GAME, KeyModifier.ALT,
-      InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L), Constants.KEY_PREFIX + "category");
-
-  public static final KeyMapping KEY_SHOW_OVERVIEW = new KeyMapping(
-      Constants.KEY_PREFIX + "show_overview", KeyConflictContext.IN_GAME, KeyModifier.CONTROL,
-      InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L), Constants.KEY_PREFIX + "category");
 
   @SubscribeEvent
   public static void handleKeyboardKeyPressedEvent(InputEvent.Key event) {
-    if (ModKeyMapping.KEY_SHOW_WIDGET.isDown() && Boolean.TRUE.equals(ClientConfig.CLIENT.widgetEnabled.get())) {
+    if (ModKeyMapping.KEY_SHOW_WIDGET.isDown()
+        && Boolean.TRUE.equals(ClientConfig.CLIENT.widgetEnabled.get())) {
       AdvancementsTracker.log.debug("Show/hide Advancements Widget ...");
       AdvancementsTrackerWidget.toggleVisibility();
     } else if (ModKeyMapping.KEY_SHOW_OVERVIEW.isDown()
