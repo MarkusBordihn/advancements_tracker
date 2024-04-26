@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -100,8 +100,14 @@ public class PositionPoint {
   }
 
   public String toString() {
-    return "PositionPoint{x:" + this.x + ", y:" + this.y + ", offsetX:" + this.offsetX
-        + ", offsetY:" + this.offsetY + "}";
+    return "PositionPoint{x:"
+        + this.x
+        + ", y:"
+        + this.y
+        + ", offsetX:"
+        + this.offsetX
+        + ", offsetY:"
+        + this.offsetY
+        + "}";
   }
-
 }

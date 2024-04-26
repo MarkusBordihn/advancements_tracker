@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,16 +19,12 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import java.util.Comparator;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-
+import de.markusbordihn.advancementstracker.Constants;
+import java.util.Comparator;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.AdvancementRewards;
@@ -41,42 +37,37 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
-
 import net.minecraftforge.fml.loading.StringUtils;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
-  Advancement advancement;
-  Advancement rootAdvancement;
-
-  DisplayInfo displayInfo;
-  ResourceLocation rootId;
-
-  String[][] requirements;
-  int rootLevel = 0;
-
   // General
   private final ResourceLocation id;
   private final String idString;
-
+  // Text Components
+  private final Component descriptionComponent;
+  private final Component titleComponent;
+  // Helper Tools
+  private final Font font;
+  private final Minecraft minecraft;
+  Advancement advancement;
+  Advancement rootAdvancement;
+  DisplayInfo displayInfo;
+  ResourceLocation rootId;
+  String[][] requirements;
+  int rootLevel = 0;
   // Display Information
   private ItemStack icon;
   private ResourceLocation background;
   private String description;
   private String title;
   private FrameType frameType;
-
-  // Text Components
-  private final Component descriptionComponent;
-  private final Component titleComponent;
   private int titleWidth;
   private int descriptionColor = 0xFFCCCCCC;
   private int titleColor = 0xFFFFFFFF;
-
   // Rewards
   private AdvancementRewards rewards = null;
   private ResourceLocation[] rewardsLoot = null;
@@ -88,13 +79,8 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   private boolean hasRewards = false;
   private boolean hasRewardsData = false;
   private boolean hasRewardsLoaded = false;
-
   // Progress
   private AdvancementEntryProgress advancementProgress;
-
-  // Helper Tools
-  private final Font font;
-  private final Minecraft minecraft;
 
   AdvancementEntry(Advancement advancement, AdvancementProgress advancementProgress) {
     // General Helper Tools
@@ -161,6 +147,28 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
 
     // Handle Rewards like experience, loot and recipes.
     this.rewards = advancement.getRewards();
+  }
+
+  private static String stripControlCodes(String value) {
+    return value == null ? "" : net.minecraft.util.StringUtil.stripColor(value);
+  }
+
+  public static Comparator<AdvancementEntry> sortByTitle() {
+    return Comparator.comparing(
+        (AdvancementEntry firstAdvancementEntry) -> firstAdvancementEntry.title);
+  }
+
+  public static Comparator<AdvancementEntry> sortByStatus() {
+    return (AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) -> {
+      int result =
+          Boolean.compare(
+              firstAdvancementEntry.getProgress().isDone(),
+              secondAdvancementEntry.getProgress().isDone());
+      if (result == 0) {
+        result = firstAdvancementEntry.title.compareTo(secondAdvancementEntry.title);
+      }
+      return result;
+    };
   }
 
   public boolean isTracked() {
@@ -251,8 +259,9 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
         if (lootArray != null) {
           this.rewardsLoot = new ResourceLocation[lootArray.size()];
           for (int j = 0; j < this.rewardsLoot.length; ++j) {
-            this.rewardsLoot[j] = new ResourceLocation(
-                GsonHelper.convertToString(lootArray.get(j), "loot[" + j + "]"));
+            this.rewardsLoot[j] =
+                new ResourceLocation(
+                    GsonHelper.convertToString(lootArray.get(j), "loot[" + j + "]"));
             this.hasLootReward = true;
             this.hasRewardsData = true;
           }
@@ -271,8 +280,9 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
         if (recipesArray != null) {
           this.rewardsRecipes = new ResourceLocation[recipesArray.size()];
           for (int k = 0; k < this.rewardsRecipes.length; ++k) {
-            this.rewardsRecipes[k] = new ResourceLocation(
-                GsonHelper.convertToString(recipesArray.get(k), "recipes[" + k + "]"));
+            this.rewardsRecipes[k] =
+                new ResourceLocation(
+                    GsonHelper.convertToString(recipesArray.get(k), "recipes[" + k + "]"));
             this.hasRecipesReward = true;
             this.hasRewardsData = true;
           }
@@ -325,10 +335,6 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
     return this.hasRecipesReward;
   }
 
-  private static String stripControlCodes(String value) {
-    return value == null ? "" : net.minecraft.util.StringUtil.stripColor(value);
-  }
-
   @Override
   public boolean equals(Object object) {
     if (object == null) {
@@ -349,36 +355,25 @@ public class AdvancementEntry implements Comparator<AdvancementEntry> {
   }
 
   @Override
-  public int compare(AdvancementEntry firstAdvancementEntry,
-      AdvancementEntry secondAdvancementEntry) {
+  public int compare(
+      AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) {
     return firstAdvancementEntry.id.compareTo(secondAdvancementEntry.id);
-  }
-
-  public static Comparator<AdvancementEntry> sortByTitle() {
-    return (AdvancementEntry firstAdvancementEntry,
-        AdvancementEntry secondAdvancementEntry) -> firstAdvancementEntry.title
-            .compareTo(secondAdvancementEntry.title);
-  }
-
-  public static Comparator<AdvancementEntry> sortByStatus() {
-    return (AdvancementEntry firstAdvancementEntry, AdvancementEntry secondAdvancementEntry) -> {
-      int result = Boolean.compare(firstAdvancementEntry.getProgress().isDone(),
-          secondAdvancementEntry.getProgress().isDone());
-      if (result == 0) {
-        result = firstAdvancementEntry.title.compareTo(secondAdvancementEntry.title);
-      }
-      return result;
-    };
   }
 
   @Override
   public String toString() {
     if (this.rootAdvancement == null) {
-      return String.format("[Root Advancement] (%s) %s: %s %s", this.frameType, this.id, this.title,
-          this.advancementProgress.getProgress());
+      return String.format(
+          "[Root Advancement] (%s) %s: %s %s",
+          this.frameType, this.id, this.title, this.advancementProgress.getProgress());
     }
-    return String.format("[Advancement %s] (%s) %s => %s: %s %s", this.rootLevel, this.frameType,
-        this.rootId, this.id, this.title, this.advancementProgress.getProgress());
+    return String.format(
+        "[Advancement %s] (%s) %s => %s: %s %s",
+        this.rootLevel,
+        this.frameType,
+        this.rootId,
+        this.id,
+        this.title,
+        this.advancementProgress.getProgress());
   }
-
 }

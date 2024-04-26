@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,15 +19,12 @@
 
 package de.markusbordihn.advancementstracker.client.keymapping;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import org.lwjgl.glfw.GLFW;
-
 import com.mojang.blaze3d.platform.InputConstants;
-
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
+import de.markusbordihn.advancementstracker.config.ClientConfig;
 import net.minecraft.client.KeyMapping;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -35,28 +32,31 @@ import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
-import de.markusbordihn.advancementstracker.client.gui.widget.AdvancementsTrackerWidget;
-import de.markusbordihn.advancementstracker.config.ClientConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
 
 @EventBusSubscriber(value = Dist.CLIENT)
 public class ModKeyMapping {
 
+  public static final KeyMapping KEY_SHOW_WIDGET =
+      new KeyMapping(
+          Constants.KEY_PREFIX + "show_widget",
+          KeyConflictContext.IN_GAME,
+          KeyModifier.ALT,
+          InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L),
+          Constants.KEY_PREFIX + "category");
+  public static final KeyMapping KEY_SHOW_OVERVIEW =
+      new KeyMapping(
+          Constants.KEY_PREFIX + "show_overview",
+          KeyConflictContext.IN_GAME,
+          KeyModifier.CONTROL,
+          InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L),
+          Constants.KEY_PREFIX + "category");
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
   private static final ClientConfig.Config CLIENT = ClientConfig.CLIENT;
 
   protected ModKeyMapping() {}
-
-  public static final KeyMapping KEY_SHOW_WIDGET = new KeyMapping(
-      Constants.KEY_PREFIX + "show_widget", KeyConflictContext.IN_GAME, KeyModifier.ALT,
-      InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L), Constants.KEY_PREFIX + "category");
-
-  public static final KeyMapping KEY_SHOW_OVERVIEW = new KeyMapping(
-      Constants.KEY_PREFIX + "show_overview", KeyConflictContext.IN_GAME, KeyModifier.CONTROL,
-      InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_L), Constants.KEY_PREFIX + "category");
 
   @SubscribeEvent
   public static void handleKeyboardKeyPressedEvent(InputEvent.Key event) {

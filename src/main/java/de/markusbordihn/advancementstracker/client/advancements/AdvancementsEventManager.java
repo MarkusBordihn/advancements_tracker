@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,9 +19,7 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import de.markusbordihn.advancementstracker.Constants;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -30,8 +28,8 @@ import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class AdvancementsEventManager {
@@ -74,14 +72,27 @@ public class AdvancementsEventManager {
       Minecraft minecraft = Minecraft.getInstance();
       if (minecraft != null) {
         LocalPlayer localPlayer = minecraft.player;
-        if (localPlayer != null && localPlayer.connection != null
-            && localPlayer.connection.getAdvancements() != null && !localPlayer.connection
-                .getAdvancements().getAdvancements().getAllAdvancements().isEmpty()) {
-          int possibleNumberOfAdvancements = localPlayer.connection.getAdvancements()
-              .getAdvancements().getAllAdvancements().size();
+        if (localPlayer != null
+            && localPlayer.connection != null
+            && localPlayer.connection.getAdvancements() != null
+            && !localPlayer
+                .connection
+                .getAdvancements()
+                .getAdvancements()
+                .getAllAdvancements()
+                .isEmpty()) {
+          int possibleNumberOfAdvancements =
+              localPlayer
+                  .connection
+                  .getAdvancements()
+                  .getAdvancements()
+                  .getAllAdvancements()
+                  .size();
           if (possibleNumberOfAdvancements > numberOfAdvancements) {
-            log.debug("Force sync of advancements because it seems we are missing some {} vs. {}",
-                possibleNumberOfAdvancements, numberOfAdvancements);
+            log.debug(
+                "Force sync of advancements because it seems we are missing some {} vs. {}",
+                possibleNumberOfAdvancements,
+                numberOfAdvancements);
             ClientAdvancementManager.reset();
             numberOfAdvancements = possibleNumberOfAdvancements;
           }
@@ -94,5 +105,4 @@ public class AdvancementsEventManager {
     log.debug("Resetting number of advancements ...");
     numberOfAdvancements = 0;
   }
-
 }
