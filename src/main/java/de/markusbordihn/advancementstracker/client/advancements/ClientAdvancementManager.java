@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,24 +19,20 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import de.markusbordihn.advancementstracker.Constants;
+import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.multiplayer.ClientAdvancements;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-
-import de.markusbordihn.advancementstracker.Constants;
-import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class ClientAdvancementManager implements ClientAdvancements.Listener {
@@ -80,9 +76,9 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
     if (minecraft != null) {
       if (minecraft.screen != null) {
         Screen screen = minecraft.screen;
-        if (!needsReload && !(screen instanceof AdvancementsTrackerScreen)
-            && (screen instanceof AdvancementsScreen
-                || screen instanceof ClientAdvancements.Listener)) {
+        if (!needsReload
+            && !(screen instanceof AdvancementsTrackerScreen)
+            && (screen instanceof ClientAdvancements.Listener)) {
           log.debug("Need to reload advancements after screen {} is closed!", minecraft.screen);
           needsReload = true;
         }
@@ -106,9 +102,17 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
       return;
     }
     Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null || minecraft.player == null || minecraft.player.connection == null
-        || minecraft.player.connection.getAdvancements() == null || minecraft.player.connection
-            .getAdvancements().getAdvancements().getAllAdvancements().isEmpty()) {
+    if (minecraft == null
+        || minecraft.player == null
+        || minecraft.player.connection == null
+        || minecraft.player.connection.getAdvancements() == null
+        || minecraft
+            .player
+            .connection
+            .getAdvancements()
+            .getAdvancements()
+            .getAllAdvancements()
+            .isEmpty()) {
       return;
     }
     log.debug("Adding client advancement manager listener...");
@@ -130,8 +134,8 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
   }
 
   @Override
-  public void onUpdateAdvancementProgress(Advancement advancement,
-      AdvancementProgress advancementProgress) {
+  public void onUpdateAdvancementProgress(
+      Advancement advancement, AdvancementProgress advancementProgress) {
     if (isValidAdvancement(advancement)) {
       log.debug("[Update Advancement Progress] {} with {}", advancement, advancementProgress);
       AdvancementsManager.updateAdvancementProgress(advancement, advancementProgress);
@@ -176,5 +180,4 @@ public class ClientAdvancementManager implements ClientAdvancements.Listener {
     // Not used.
     log.debug("[Selected Tab Changed] {}", advancement);
   }
-
 }

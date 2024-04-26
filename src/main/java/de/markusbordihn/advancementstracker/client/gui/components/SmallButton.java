@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -20,7 +20,6 @@
 package de.markusbordihn.advancementstracker.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,10 +30,9 @@ import net.minecraft.util.Mth;
 
 public class SmallButton extends Button {
 
+  private static final float SCALING = 0.55f;
   private final Minecraft minecraft;
   private final Font font;
-
-  private static final float SCALING = 0.55f;
   private final int scaledX;
   private final int scaledY;
   private final int scaledWidth;
@@ -61,16 +59,35 @@ public class SmallButton extends Button {
 
     // Scaling down the button images
     int buttonPosTop = getTextureY() / 2;
-    guiGraphics.blit(WIDGETS_LOCATION, this.getX(), this.getY(), 0, buttonPosTop, this.width / 2,
-        this.height, 256, 128);
-    guiGraphics.blit(WIDGETS_LOCATION, this.getX() + this.width / 2, this.getY(),
-        200 - this.width / 2.0f, buttonPosTop, this.width / 2, this.height, 256, 128);
+    guiGraphics.blit(
+        WIDGETS_LOCATION,
+        this.getX(),
+        this.getY(),
+        0,
+        buttonPosTop,
+        this.width / 2,
+        this.height,
+        256,
+        128);
+    guiGraphics.blit(
+        WIDGETS_LOCATION,
+        this.getX() + this.width / 2,
+        this.getY(),
+        200 - this.width / 2.0f,
+        buttonPosTop,
+        this.width / 2,
+        this.height,
+        256,
+        128);
 
     // Scaling down button text
     guiGraphics.pose().pushPose();
     guiGraphics.pose().scale(SCALING, SCALING, SCALING);
-    guiGraphics.drawCenteredString(this.font, this.getMessage(),
-        this.scaledX + this.scaledWidth / 2, this.scaledY + (this.scaledHeight - 8) / 2,
+    guiGraphics.drawCenteredString(
+        this.font,
+        this.getMessage(),
+        this.scaledX + this.scaledWidth / 2,
+        this.scaledY + (this.scaledHeight - 8) / 2,
         getFGColor() | Mth.ceil(this.alpha * 255.0F) << 24);
     guiGraphics.pose().popPose();
   }
@@ -84,5 +101,4 @@ public class SmallButton extends Button {
     }
     return 46 + i * 20;
   }
-
 }

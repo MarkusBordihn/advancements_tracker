@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,16 +19,12 @@
 
 package de.markusbordihn.advancementstracker.client.advancements;
 
+import com.google.common.collect.Lists;
+import de.markusbordihn.advancementstracker.Constants;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.google.common.collect.Lists;
-
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.CriterionProgress;
@@ -36,21 +32,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdvancementEntryProgress {
 
   protected static final Logger log = LogManager.getLogger(Constants.LOG_NAME);
-
+  // Helper Tools
+  private final Font font;
+  private final Minecraft minecraft;
   private AdvancementProgress advancementProgress;
-
   private Map<String, CriterionProgress> criteriaMap = new HashMap<>();
-
   // Ids
   private ResourceLocation id;
   private String namespace = "";
-
   // Progress with default values
   private Date firstProgressDate;
   private Date lastProgressDate;
@@ -59,17 +54,12 @@ public class AdvancementEntryProgress {
   private boolean isDone = false;
   private int progressStringWidth = 0;
   private int progressTotal = 0;
-
   // Criteria
   private Iterable<String> completedCriteria;
   private Iterable<String> remainingCriteria;
   private int completedCriteriaNumber;
   private int remainingCriteriaNumber;
   private int maxCriteraRequired;
-
-  // Helper Tools
-  private final Font font;
-  private final Minecraft minecraft;
 
   AdvancementEntryProgress(Advancement advancement, AdvancementProgress advancementProgress) {
     // General Helper Tools
@@ -215,9 +205,10 @@ public class AdvancementEntryProgress {
       for (String possibleNamespace : namespaces) {
 
         // Normalize names for the namespace.
-        String criteriaName = criteria.startsWith(possibleNamespace + ":")
-            ? criteria.replace(possibleNamespace + ":", "")
-            : criteria;
+        String criteriaName =
+            criteria.startsWith(possibleNamespace + ":")
+                ? criteria.replace(possibleNamespace + ":", "")
+                : criteria;
 
         // Check for item in namespace.
         String itemNameFormat = "item." + possibleNamespace + "." + criteriaName;
@@ -263,17 +254,20 @@ public class AdvancementEntryProgress {
       }
 
       String advancementNameFormat =
-          "advancement." + this.id.toString().replace(":", ".").replace("/", ".") + "."
+          "advancement."
+              + this.id.toString().replace(":", ".").replace("/", ".")
+              + "."
               + criteria.replace(":", ".").replace("/", ".");
       Component advancementName = Component.translatable(advancementNameFormat);
       if (!advancementName.getString().equals(advancementNameFormat)) {
         return advancementName.getString();
       }
 
-      log.warn("Unable to translate {} ({}) to a more meaningful name.", criteria,
+      log.warn(
+          "Unable to translate {} ({}) to a more meaningful name.",
+          criteria,
           advancementNameFormat);
     }
     return criteria;
   }
-
 }

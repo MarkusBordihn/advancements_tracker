@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,26 +19,22 @@
 
 package de.markusbordihn.advancementstracker.client.gui.panel;
 
-import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.locale.Language;
-
 import de.markusbordihn.advancementstracker.Constants;
 import de.markusbordihn.advancementstracker.client.advancements.AdvancementEntry;
 import de.markusbordihn.advancementstracker.client.advancements.TrackedAdvancementsManager;
 import de.markusbordihn.advancementstracker.client.gui.screens.AdvancementsTrackerScreen;
+import java.util.List;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdvancementCategoryPanel
     extends ObjectSelectionList<AdvancementCategoryPanel.RootAdvancementEntry> {
@@ -50,9 +46,14 @@ public class AdvancementCategoryPanel
 
   private AdvancementsTrackerScreen parent;
 
-  public AdvancementCategoryPanel(AdvancementsTrackerScreen parent, int listWidth, int top,
-      int listLeft, int bottom) {
-    super(parent.getMinecraftInstance(), listWidth, parent.height, top, bottom,
+  public AdvancementCategoryPanel(
+      AdvancementsTrackerScreen parent, int listWidth, int top, int listLeft, int bottom) {
+    super(
+        parent.getMinecraftInstance(),
+        listWidth,
+        parent.height,
+        top,
+        bottom,
         parent.getFontRenderer().lineHeight * 3 + 8);
     this.parent = parent;
     this.listWidth = listWidth;
@@ -66,14 +67,15 @@ public class AdvancementCategoryPanel
     this.clearEntries();
 
     // Build root advancements list.
-    parent.buildRootAdvancementsList(this::addEntry,
-        mod -> new RootAdvancementEntry(mod, this.parent));
+    parent.buildRootAdvancementsList(
+        this::addEntry, mod -> new RootAdvancementEntry(mod, this.parent));
 
     // Pre-select first entry if we have nothing selected.
     if (this.getSelected() == null && parent.getSelectedRootAdvancement() != null) {
       this.refreshSelection();
       for (int i = 0; i < getItemCount(); i++) {
-        if (getEntry(i) != null && getEntry(i).advancementEntry != null
+        if (getEntry(i) != null
+            && getEntry(i).advancementEntry != null
             && getEntry(i).advancementEntry == parent.getSelectedRootAdvancement()) {
           this.setSelected(getEntry(i));
         }
@@ -92,6 +94,25 @@ public class AdvancementCategoryPanel
       this.setSelected(rootAdvancementEntry);
       this.ensureVisible(rootAdvancementEntry);
     }
+  }
+
+  @Override
+  public boolean isMouseOver(double mouseX, double mouseY) {
+    return !parent.showingAdvancementDetail()
+        && mouseY >= this.y0
+        && mouseY <= this.y1
+        && mouseX >= this.x0
+        && mouseX <= this.x1 + 5;
+  }
+
+  @Override
+  protected int getScrollbarPosition() {
+    return this.listWidth + this.listLeft;
+  }
+
+  @Override
+  public int getRowWidth() {
+    return this.listWidth;
   }
 
   public class RootAdvancementEntry extends ObjectSelectionList.Entry<RootAdvancementEntry> {
@@ -125,8 +146,11 @@ public class AdvancementCategoryPanel
       this.maxFontWidth = listWidth - iconWidth - 4;
       this.titleWidth =
           advancementEntry.getTitleWidth() > maxFontWidth ? maxFontWidth - 6 : maxFontWidth;
-      this.titleParts = Language.getInstance().getVisualOrder(
-          FormattedText.composite(font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
+      this.titleParts =
+          Language.getInstance()
+              .getVisualOrder(
+                  FormattedText.composite(
+                      font.substrByWidth(advancementEntry.getTitle(), titleWidth)));
       this.descriptionParts = font.split(advancementEntry.getDescription(), maxFontWidth);
     }
 
@@ -134,8 +158,8 @@ public class AdvancementCategoryPanel
       return advancementEntry;
     }
 
-    private void renderBackground(GuiGraphics guiGraphics, int top, int entryWidth,
-        int entryHeight) {
+    private void renderBackground(
+        GuiGraphics guiGraphics, int top, int entryWidth, int entryHeight) {
       if (this.advancementEntry.getBackground() == null) {
         return;
       }
@@ -145,8 +169,16 @@ public class AdvancementCategoryPanel
         RenderSystem.setShaderColor(0.4f, 0.4f, 0.4f, 1);
       }
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(this.advancementEntry.getBackground(), getLeft() + 1, top - 1, 0, 0,
-          entryWidth - 2, entryHeight + 2, 16, 16);
+      guiGraphics.blit(
+          this.advancementEntry.getBackground(),
+          getLeft() + 1,
+          top - 1,
+          0,
+          0,
+          entryWidth - 2,
+          entryHeight + 2,
+          16,
+          16);
       guiGraphics.pose().popPose();
     }
 
@@ -157,32 +189,48 @@ public class AdvancementCategoryPanel
       guiGraphics.renderItem(this.advancementEntry.getIcon(), getLeft() + 1, top + 6);
     }
 
-    private void renderTrackedAdvancementsStatus(GuiGraphics guiGraphics, int top, int left,
-        int entryWidth) {
+    private void renderTrackedAdvancementsStatus(
+        GuiGraphics guiGraphics, int top, int left, int entryWidth) {
       if (TrackedAdvancementsManager.hasTrackedAdvancement(this.advancementEntry)) {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().scale(0.5f, 0.5f, 0.5f);
-        guiGraphics.blit(miscTexture, (left + entryWidth - 12) * 2, (top + 1) * 2, 81, 6, 16, 16,
-            256, 256);
+        guiGraphics.blit(
+            miscTexture, (left + entryWidth - 12) * 2, (top + 1) * 2, 81, 6, 16, 16, 256, 256);
         guiGraphics.pose().popPose();
       }
     }
 
-    private void renderDecoration(GuiGraphics guiGraphics, int top, int entryWidth,
-        int entryHeight) {
+    private void renderDecoration(
+        GuiGraphics guiGraphics, int top, int entryWidth, int entryHeight) {
       int topPosition = top - 2;
       int leftPosition = getLeft();
       int rightPosition = leftPosition + entryWidth - 2;
       int bottomPosition = top + entryHeight;
       guiGraphics.pose().pushPose();
-      guiGraphics.blit(miscTexture, leftPosition, topPosition, 0, 0, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      guiGraphics.blit(miscTexture, rightPosition, topPosition + 1, 255, 0, 1, entryHeight + 2, 256,
+      guiGraphics.blit(
+          miscTexture, leftPosition, topPosition, 0, 0, entryWidth - 1, 1, entryWidth - 1, 256);
+      guiGraphics.blit(
+          miscTexture,
+          rightPosition,
+          topPosition + 1,
+          255,
+          0,
+          1,
+          entryHeight + 2,
+          256,
           entryHeight);
-      guiGraphics.blit(miscTexture, leftPosition, bottomPosition, 0, 255, entryWidth - 1, 1,
-          entryWidth - 1, 256);
-      guiGraphics.blit(miscTexture, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256,
-          entryHeight);
+      guiGraphics.blit(
+          miscTexture,
+          leftPosition,
+          bottomPosition,
+          0,
+          255,
+          entryWidth - 1,
+          1,
+          entryWidth - 1,
+          256);
+      guiGraphics.blit(
+          miscTexture, leftPosition, topPosition + 1, 0, 0, 1, entryHeight + 2, 256, entryHeight);
       guiGraphics.pose().popPose();
     }
 
@@ -192,8 +240,17 @@ public class AdvancementCategoryPanel
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int entryIdx, int top, int left, int entryWidth,
-        int entryHeight, int mouseX, int mouseY, boolean isFocused, float partialTick) {
+    public void render(
+        GuiGraphics guiGraphics,
+        int entryIdx,
+        int top,
+        int left,
+        int entryWidth,
+        int entryHeight,
+        int mouseX,
+        int mouseY,
+        boolean isFocused,
+        float partialTick) {
 
       // Selection state
       this.isSelected = isSelectedItem(entryIdx);
@@ -226,25 +283,39 @@ public class AdvancementCategoryPanel
 
       // Title (only one line)
       int currentTitleColor = isSelected ? 0xFFFF00 : this.titleColor;
-      guiGraphics.drawString(this.font, this.titleParts, textPositionLeft + 3, top + 1,
-          currentTitleColor);
+      guiGraphics.drawString(
+          this.font, this.titleParts, textPositionLeft + 3, top + 1, currentTitleColor);
       if (titleWidth != maxFontWidth) {
-        guiGraphics.drawString(this.font, Constants.ELLIPSIS, textPositionLeft + titleWidth,
-            top + 1, currentTitleColor, false);
+        guiGraphics.drawString(
+            this.font,
+            Constants.ELLIPSIS,
+            textPositionLeft + titleWidth,
+            top + 1,
+            currentTitleColor,
+            false);
       }
 
       // Description (two lines)
       int descriptionLines = 1;
       for (FormattedCharSequence descriptionPart : this.descriptionParts) {
         int descriptionTopPosition = top + (2 + font.lineHeight) * descriptionLines;
-        guiGraphics.drawString(this.font, descriptionPart, textPositionLeft + 3,
-            descriptionTopPosition, this.descriptionColor);
-        if (this.descriptionParts.size() == 3 && descriptionLines == 2) {
-          guiGraphics.drawString(this.font, Constants.ELLIPSIS,
-              textPositionLeft + (font.width(descriptionPart) < maxFontWidth - 6
-                  ? font.width(descriptionPart) + 6
-                  : maxFontWidth - 6),
-              descriptionTopPosition, 0xFFFFFF, false);
+        guiGraphics.drawString(
+            this.font,
+            descriptionPart,
+            textPositionLeft + 3,
+            descriptionTopPosition,
+            this.descriptionColor);
+        if (this.descriptionParts.size() >= 3 && descriptionLines == 2) {
+          guiGraphics.drawString(
+              this.font,
+              Constants.ELLIPSIS,
+              textPositionLeft
+                  + (font.width(descriptionPart) < maxFontWidth - 6
+                      ? font.width(descriptionPart) + 6
+                      : maxFontWidth - 6),
+              descriptionTopPosition,
+              0xFFFFFF,
+              false);
           break;
         }
         descriptionLines++;
@@ -262,23 +333,5 @@ public class AdvancementCategoryPanel
       }
       return super.mouseClicked(mouseX, mouseY, button);
     }
-
   }
-
-  @Override
-  public boolean isMouseOver(double mouseX, double mouseY) {
-    return !parent.showingAdvancementDetail() && mouseY >= this.y0 && mouseY <= this.y1
-        && mouseX >= this.x0 && mouseX <= this.x1 + 5;
-  }
-
-  @Override
-  protected int getScrollbarPosition() {
-    return this.listWidth + this.listLeft;
-  }
-
-  @Override
-  public int getRowWidth() {
-    return this.listWidth;
-  }
-
 }

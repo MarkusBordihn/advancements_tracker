@@ -5,6 +5,11 @@
 This change log includes the summarized changes.
 For the full changelog, please go to the [Git Hub History][history] instead.
 
+### 6.1.0
+
+- Refactored code for next major release.
+- Fixed small issues.
+
 ### 2023.07.17
 
 - Refactored code for 1.20.1-47.1.30

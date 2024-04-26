@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Markus Bordihn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -19,16 +19,12 @@
 
 package de.markusbordihn.advancementstracker.client.gui.panel;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.Tesselator;
+import de.markusbordihn.advancementstracker.Constants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.Tesselator;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,11 +33,10 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import net.minecraftforge.common.ForgeHooks;
-
-import de.markusbordihn.advancementstracker.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdvancementInfoPanel extends ScrollPanel {
 
@@ -81,8 +76,9 @@ public class AdvancementInfoPanel extends ScrollPanel {
         } else if (line.startsWith("❌")) {
           textStyle = Style.EMPTY.withColor(0xFF0000);
         }
-        result.addAll(Language.getInstance()
-            .getVisualOrder(font.getSplitter().splitLines(chat, maxTextLength, textStyle)));
+        result.addAll(
+            Language.getInstance()
+                .getVisualOrder(font.getSplitter().splitLines(chat, maxTextLength, textStyle)));
       }
     }
     return result;
@@ -102,8 +98,7 @@ public class AdvancementInfoPanel extends ScrollPanel {
   protected int getContentHeight() {
     int height = 5;
     height += (lines.size() * font.lineHeight);
-    if (height < this.bottom - this.top - 8)
-      height = this.bottom - this.top - 8;
+    if (height < this.bottom - this.top - 8) height = this.bottom - this.top - 8;
     return height;
   }
 
@@ -113,8 +108,13 @@ public class AdvancementInfoPanel extends ScrollPanel {
   }
 
   @Override
-  protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, Tesselator tess,
-      int mouseX, int mouseY) {
+  protected void drawPanel(
+      GuiGraphics guiGraphics,
+      int entryRight,
+      int relativeY,
+      Tesselator tess,
+      int mouseX,
+      int mouseY) {
     guiGraphics.pose().pushPose();
     guiGraphics.pose().translate(0, 0, 201);
     for (FormattedCharSequence line : lines) {
@@ -127,5 +127,4 @@ public class AdvancementInfoPanel extends ScrollPanel {
     }
     guiGraphics.pose().popPose();
   }
-
 }
